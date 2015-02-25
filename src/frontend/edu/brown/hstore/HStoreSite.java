@@ -396,6 +396,11 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
     private final PartitionSet local_partitions = new PartitionSet();
     
     /**
+     * Replicas of partitions
+     */
+    private final Map<Integer, List<Integer>> partitionReplicas = null;
+    
+    /**
      * PartitionId -> Internal Offset
      * This is so that we don't have to keep long arrays of local partition information
      */
@@ -652,14 +657,14 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
         if(hstore_conf.global.reconfiguration_enable){
             LOG.info("Initializing Reconfiguration Coordinator");
             this.reconfiguration_coordinator = this.initReconfigCoordinator();
-            Map<Integer, List<Integer>> partitionReplicas = null;
+//            Map<Integer, List<Integer>> partitionReplicas = null;
             if(this.hasher instanceof PlannedHasher){
                 ((PlannedHasher)this.hasher).setReconfigCoord(this.reconfiguration_coordinator);
-                partitionReplicas = ((PlannedHasher)this.hasher).getPartitionReplicas();
+                this.partitionReplicas = ((PlannedHasher)this.hasher).getPartitionReplicas();
             }
             else if(this.hasher instanceof TwoTieredRangeHasher){
                 ((TwoTieredRangeHasher)this.hasher).setReconfigCoord(this.reconfiguration_coordinator);
-                partitionReplicas = ((TwoTieredRangeHasher)this.hasher).getPartitionReplicas();
+                this.partitionReplicas = ((TwoTieredRangeHasher)this.hasher).getPartitionReplicas();
             }   
             LOG.info(String.format("Replicas: %s", partitionReplicas));
         }
@@ -1079,6 +1084,16 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
         assert(partition < this.local_partition_offsets.length) :
             String.format("Invalid partition %d - %s", partition, this.catalogContext.getAllPartitionIds());
         return (this.local_partition_offsets[partition] != -1);
+    }
+    /**
+     * Returns true if the given partition id is a primary partition
+     * @param partition
+     * @return whether this partition is a primary
+     */
+    public boolean isPrimaryPartition(int partition) {
+    	assert(partition >= 0);
+    	assert(this.partitionReplicas != null);
+    	return this.partitionReplicas.get(partition) != null
     }
     /**
      * Returns true if the given PartitionSite contains partitions that are
@@ -1753,7 +1768,7 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
         if (hstore_conf.site.profiling && base_partition != HStoreConstants.NULL_PARTITION_ID) {
             synchronized (profiler.network_incoming_partitions) {
                 profiler.network_incoming_partitions.put(base_partition);
-            } // SYNCH
+            } // SYNC
         }
         
         // -------------------------------
@@ -1764,6 +1779,16 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
             // the right HStoreSite
             this.transactionRedirect(catalog_proc, buffer, base_partition, clientCallback);
             return;
+        }
+        
+        // -------------------------------
+        // DIRECT TXN TO REPLICAS
+        // -------------------------------
+        // TODO(Katie) probably best to do this elsewhere, after we can make sure the primary receives it.
+        if (this.isPrimaryPartition(base_partition)) {
+        	for (int partitionNum : this.partitionReplicas.get(base_partition)) {
+        		this.transactionRedirect(catalog_proc, buffer, partitionNum, clientCallback);
+            }
         }
         
         // 2012-12-24 - We always want the network threads to do the initialization
