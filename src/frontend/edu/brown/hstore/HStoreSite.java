@@ -398,7 +398,7 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
     /**
      * Replicas of partitions
      */
-    private final Map<Integer, List<Integer>> partitionReplicas = null;
+    private Map<Integer, List<Integer>> partitionReplicas;
     
     /**
      * PartitionId -> Internal Offset
@@ -1093,7 +1093,7 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
     public boolean isPrimaryPartition(int partition) {
     	assert(partition >= 0);
     	assert(this.partitionReplicas != null);
-    	return this.partitionReplicas.get(partition) != null
+    	return this.partitionReplicas.get(partition) != null;
     }
     /**
      * Returns true if the given PartitionSite contains partitions that are
@@ -1794,7 +1794,7 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
         // 2012-12-24 - We always want the network threads to do the initialization
         if (trace.val)
             LOG.trace("Initializing transaction request using network processing thread");
-        LocalTransaction ts = this.txnInitializer.createLocalTransaction(
+        LocalTransaction ts = this.txnInitializer.createLocalTransaction( //TODO(Katie)
                                         buffer,
                                         timestamp,
                                         client_handle,
