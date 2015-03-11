@@ -376,12 +376,6 @@ message TransactionForwardToReplicaRequest {
     required int32 base_partition = 4;
 }
 
-message TransactionForwardToReplicaResponse {
-	required int32 sender_site = 1;
-	required bytes output = 2;
-	required int32 base_partition = 3;
-}
-
 // -----------------------------------
 // TRANSACTION DEBUG MESSAGE
 // -----------------------------------

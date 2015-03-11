@@ -687,6 +687,11 @@ public class HStoreCoordinator implements Shutdownable {
         }
         
         @Override
+        public void transactionForwardToReplica(LocalTransaction ts) {
+        	// TODO(katie) implement
+        }
+        
+        @Override
         public void sendData(RpcController controller, SendDataRequest request, RpcCallback<SendDataResponse> done) {
             // Take the SendDataRequest and pass it to the sendData_handler, which
             // will deserialize the embedded VoltTable and wrap it in something that we can
