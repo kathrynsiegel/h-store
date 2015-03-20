@@ -686,10 +686,10 @@ public class HStoreCoordinator implements Shutdownable {
             }
         }
         
-        @Override
-        public void transactionForwardToReplica(RpcController controller, TransactionForwardToReplicaRequest request, RpcCallback<TransactionForwardToReplicaResponse> done) {
-        	// TODO(katie) implement
-        }
+        //@Override
+//        public void transactionForwardToReplica(RpcController controller, TransactionForwardToReplicaRequest request, RpcCallback<TransactionForwardToReplicaResponse> done) {
+//        	// TODO(katie) implement
+//        }
         
         @Override
         public void sendData(RpcController controller, SendDataRequest request, RpcCallback<SendDataResponse> done) {
