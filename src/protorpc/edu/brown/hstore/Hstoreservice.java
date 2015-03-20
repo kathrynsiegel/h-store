@@ -22914,6 +22914,11 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.TransactionRedirectRequest request,
           com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.TransactionRedirectResponse> done);
       
+      public abstract void transactionForwardToReplica(
+          com.google.protobuf.RpcController controller,
+          edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaRequest request,
+          com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse> done);
+      
       public abstract void transactionDebug(
           com.google.protobuf.RpcController controller,
           edu.brown.hstore.Hstoreservice.TransactionDebugRequest request,
@@ -23046,6 +23051,14 @@ public final class Hstoreservice {
             edu.brown.hstore.Hstoreservice.TransactionRedirectRequest request,
             com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.TransactionRedirectResponse> done) {
           impl.transactionRedirect(controller, request, done);
+        }
+        
+        @Override
+        public  void transactionForwardToReplica(
+            com.google.protobuf.RpcController controller,
+            edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaRequest request,
+            com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse> done) {
+          impl.transactionForwardToReplica(controller, request, done);
         }
         
         @Override
@@ -23191,30 +23204,32 @@ public final class Hstoreservice {
             case 7:
               return impl.transactionRedirect(controller, (edu.brown.hstore.Hstoreservice.TransactionRedirectRequest)request);
             case 8:
-              return impl.transactionDebug(controller, (edu.brown.hstore.Hstoreservice.TransactionDebugRequest)request);
+              return impl.transactionForwardToReplica(controller, (edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaRequest)request);
             case 9:
-              return impl.sendData(controller, (edu.brown.hstore.Hstoreservice.SendDataRequest)request);
+              return impl.transactionDebug(controller, (edu.brown.hstore.Hstoreservice.TransactionDebugRequest)request);
             case 10:
-              return impl.initialize(controller, (edu.brown.hstore.Hstoreservice.InitializeRequest)request);
+              return impl.sendData(controller, (edu.brown.hstore.Hstoreservice.SendDataRequest)request);
             case 11:
-              return impl.shutdownPrepare(controller, (edu.brown.hstore.Hstoreservice.ShutdownPrepareRequest)request);
+              return impl.initialize(controller, (edu.brown.hstore.Hstoreservice.InitializeRequest)request);
             case 12:
-              return impl.shutdown(controller, (edu.brown.hstore.Hstoreservice.ShutdownRequest)request);
+              return impl.shutdownPrepare(controller, (edu.brown.hstore.Hstoreservice.ShutdownPrepareRequest)request);
             case 13:
-              return impl.heartbeat(controller, (edu.brown.hstore.Hstoreservice.HeartbeatRequest)request);
+              return impl.shutdown(controller, (edu.brown.hstore.Hstoreservice.ShutdownRequest)request);
             case 14:
-              return impl.timeSync(controller, (edu.brown.hstore.Hstoreservice.TimeSyncRequest)request);
+              return impl.heartbeat(controller, (edu.brown.hstore.Hstoreservice.HeartbeatRequest)request);
             case 15:
-              return impl.reconfiguration(controller, (edu.brown.hstore.Hstoreservice.ReconfigurationRequest)request);
+              return impl.timeSync(controller, (edu.brown.hstore.Hstoreservice.TimeSyncRequest)request);
             case 16:
-              return impl.dataTransfer(controller, (edu.brown.hstore.Hstoreservice.DataTransferRequest)request);
+              return impl.reconfiguration(controller, (edu.brown.hstore.Hstoreservice.ReconfigurationRequest)request);
             case 17:
-              return impl.livePull(controller, (edu.brown.hstore.Hstoreservice.LivePullRequest)request);
+              return impl.dataTransfer(controller, (edu.brown.hstore.Hstoreservice.DataTransferRequest)request);
             case 18:
-              return impl.asyncPull(controller, (edu.brown.hstore.Hstoreservice.AsyncPullRequest)request);
+              return impl.livePull(controller, (edu.brown.hstore.Hstoreservice.LivePullRequest)request);
             case 19:
-              return impl.reconfigurationControlMsg(controller, (edu.brown.hstore.Hstoreservice.ReconfigurationControlRequest)request);
+              return impl.asyncPull(controller, (edu.brown.hstore.Hstoreservice.AsyncPullRequest)request);
             case 20:
+              return impl.reconfigurationControlMsg(controller, (edu.brown.hstore.Hstoreservice.ReconfigurationControlRequest)request);
+            case 21:
               return impl.multiPullReply(controller, (edu.brown.hstore.Hstoreservice.MultiPullReplyRequest)request);
             default:
               throw new java.lang.AssertionError("Can't get here.");
@@ -23247,30 +23262,32 @@ public final class Hstoreservice {
             case 7:
               return edu.brown.hstore.Hstoreservice.TransactionRedirectRequest.getDefaultInstance();
             case 8:
-              return edu.brown.hstore.Hstoreservice.TransactionDebugRequest.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaRequest.getDefaultInstance();
             case 9:
-              return edu.brown.hstore.Hstoreservice.SendDataRequest.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.TransactionDebugRequest.getDefaultInstance();
             case 10:
-              return edu.brown.hstore.Hstoreservice.InitializeRequest.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.SendDataRequest.getDefaultInstance();
             case 11:
-              return edu.brown.hstore.Hstoreservice.ShutdownPrepareRequest.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.InitializeRequest.getDefaultInstance();
             case 12:
-              return edu.brown.hstore.Hstoreservice.ShutdownRequest.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.ShutdownPrepareRequest.getDefaultInstance();
             case 13:
-              return edu.brown.hstore.Hstoreservice.HeartbeatRequest.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.ShutdownRequest.getDefaultInstance();
             case 14:
-              return edu.brown.hstore.Hstoreservice.TimeSyncRequest.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.HeartbeatRequest.getDefaultInstance();
             case 15:
-              return edu.brown.hstore.Hstoreservice.ReconfigurationRequest.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.TimeSyncRequest.getDefaultInstance();
             case 16:
-              return edu.brown.hstore.Hstoreservice.DataTransferRequest.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.ReconfigurationRequest.getDefaultInstance();
             case 17:
-              return edu.brown.hstore.Hstoreservice.LivePullRequest.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.DataTransferRequest.getDefaultInstance();
             case 18:
-              return edu.brown.hstore.Hstoreservice.AsyncPullRequest.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.LivePullRequest.getDefaultInstance();
             case 19:
-              return edu.brown.hstore.Hstoreservice.ReconfigurationControlRequest.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.AsyncPullRequest.getDefaultInstance();
             case 20:
+              return edu.brown.hstore.Hstoreservice.ReconfigurationControlRequest.getDefaultInstance();
+            case 21:
               return edu.brown.hstore.Hstoreservice.MultiPullReplyRequest.getDefaultInstance();
             default:
               throw new java.lang.AssertionError("Can't get here.");
@@ -23303,30 +23320,32 @@ public final class Hstoreservice {
             case 7:
               return edu.brown.hstore.Hstoreservice.TransactionRedirectResponse.getDefaultInstance();
             case 8:
-              return edu.brown.hstore.Hstoreservice.TransactionDebugResponse.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse.getDefaultInstance();
             case 9:
-              return edu.brown.hstore.Hstoreservice.SendDataResponse.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.TransactionDebugResponse.getDefaultInstance();
             case 10:
-              return edu.brown.hstore.Hstoreservice.InitializeResponse.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.SendDataResponse.getDefaultInstance();
             case 11:
-              return edu.brown.hstore.Hstoreservice.ShutdownPrepareResponse.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.InitializeResponse.getDefaultInstance();
             case 12:
-              return edu.brown.hstore.Hstoreservice.ShutdownResponse.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.ShutdownPrepareResponse.getDefaultInstance();
             case 13:
-              return edu.brown.hstore.Hstoreservice.HeartbeatResponse.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.ShutdownResponse.getDefaultInstance();
             case 14:
-              return edu.brown.hstore.Hstoreservice.TimeSyncResponse.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.HeartbeatResponse.getDefaultInstance();
             case 15:
-              return edu.brown.hstore.Hstoreservice.ReconfigurationResponse.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.TimeSyncResponse.getDefaultInstance();
             case 16:
-              return edu.brown.hstore.Hstoreservice.DataTransferResponse.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.ReconfigurationResponse.getDefaultInstance();
             case 17:
-              return edu.brown.hstore.Hstoreservice.LivePullResponse.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.DataTransferResponse.getDefaultInstance();
             case 18:
-              return edu.brown.hstore.Hstoreservice.AsyncPullResponse.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.LivePullResponse.getDefaultInstance();
             case 19:
-              return edu.brown.hstore.Hstoreservice.ReconfigurationControlResponse.getDefaultInstance();
+              return edu.brown.hstore.Hstoreservice.AsyncPullResponse.getDefaultInstance();
             case 20:
+              return edu.brown.hstore.Hstoreservice.ReconfigurationControlResponse.getDefaultInstance();
+            case 21:
               return edu.brown.hstore.Hstoreservice.MultiPullReplyResponse.getDefaultInstance();
             default:
               throw new java.lang.AssertionError("Can't get here.");
@@ -23375,6 +23394,11 @@ public final class Hstoreservice {
         com.google.protobuf.RpcController controller,
         edu.brown.hstore.Hstoreservice.TransactionRedirectRequest request,
         com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.TransactionRedirectResponse> done);
+    
+    public abstract void transactionForwardToReplica(
+        com.google.protobuf.RpcController controller,
+        edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaRequest request,
+        com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse> done);
     
     public abstract void transactionDebug(
         com.google.protobuf.RpcController controller,
@@ -23504,66 +23528,71 @@ public final class Hstoreservice {
               done));
           return;
         case 8:
+          this.transactionForwardToReplica(controller, (edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaRequest)request,
+            com.google.protobuf.RpcUtil.<edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse>specializeCallback(
+              done));
+          return;
+        case 9:
           this.transactionDebug(controller, (edu.brown.hstore.Hstoreservice.TransactionDebugRequest)request,
             com.google.protobuf.RpcUtil.<edu.brown.hstore.Hstoreservice.TransactionDebugResponse>specializeCallback(
               done));
           return;
-        case 9:
+        case 10:
           this.sendData(controller, (edu.brown.hstore.Hstoreservice.SendDataRequest)request,
             com.google.protobuf.RpcUtil.<edu.brown.hstore.Hstoreservice.SendDataResponse>specializeCallback(
               done));
           return;
-        case 10:
+        case 11:
           this.initialize(controller, (edu.brown.hstore.Hstoreservice.InitializeRequest)request,
             com.google.protobuf.RpcUtil.<edu.brown.hstore.Hstoreservice.InitializeResponse>specializeCallback(
               done));
           return;
-        case 11:
+        case 12:
           this.shutdownPrepare(controller, (edu.brown.hstore.Hstoreservice.ShutdownPrepareRequest)request,
             com.google.protobuf.RpcUtil.<edu.brown.hstore.Hstoreservice.ShutdownPrepareResponse>specializeCallback(
               done));
           return;
-        case 12:
+        case 13:
           this.shutdown(controller, (edu.brown.hstore.Hstoreservice.ShutdownRequest)request,
             com.google.protobuf.RpcUtil.<edu.brown.hstore.Hstoreservice.ShutdownResponse>specializeCallback(
               done));
           return;
-        case 13:
+        case 14:
           this.heartbeat(controller, (edu.brown.hstore.Hstoreservice.HeartbeatRequest)request,
             com.google.protobuf.RpcUtil.<edu.brown.hstore.Hstoreservice.HeartbeatResponse>specializeCallback(
               done));
           return;
-        case 14:
+        case 15:
           this.timeSync(controller, (edu.brown.hstore.Hstoreservice.TimeSyncRequest)request,
             com.google.protobuf.RpcUtil.<edu.brown.hstore.Hstoreservice.TimeSyncResponse>specializeCallback(
               done));
           return;
-        case 15:
+        case 16:
           this.reconfiguration(controller, (edu.brown.hstore.Hstoreservice.ReconfigurationRequest)request,
             com.google.protobuf.RpcUtil.<edu.brown.hstore.Hstoreservice.ReconfigurationResponse>specializeCallback(
               done));
           return;
-        case 16:
+        case 17:
           this.dataTransfer(controller, (edu.brown.hstore.Hstoreservice.DataTransferRequest)request,
             com.google.protobuf.RpcUtil.<edu.brown.hstore.Hstoreservice.DataTransferResponse>specializeCallback(
               done));
           return;
-        case 17:
+        case 18:
           this.livePull(controller, (edu.brown.hstore.Hstoreservice.LivePullRequest)request,
             com.google.protobuf.RpcUtil.<edu.brown.hstore.Hstoreservice.LivePullResponse>specializeCallback(
               done));
           return;
-        case 18:
+        case 19:
           this.asyncPull(controller, (edu.brown.hstore.Hstoreservice.AsyncPullRequest)request,
             com.google.protobuf.RpcUtil.<edu.brown.hstore.Hstoreservice.AsyncPullResponse>specializeCallback(
               done));
           return;
-        case 19:
+        case 20:
           this.reconfigurationControlMsg(controller, (edu.brown.hstore.Hstoreservice.ReconfigurationControlRequest)request,
             com.google.protobuf.RpcUtil.<edu.brown.hstore.Hstoreservice.ReconfigurationControlResponse>specializeCallback(
               done));
           return;
-        case 20:
+        case 21:
           this.multiPullReply(controller, (edu.brown.hstore.Hstoreservice.MultiPullReplyRequest)request,
             com.google.protobuf.RpcUtil.<edu.brown.hstore.Hstoreservice.MultiPullReplyResponse>specializeCallback(
               done));
@@ -23599,30 +23628,32 @@ public final class Hstoreservice {
         case 7:
           return edu.brown.hstore.Hstoreservice.TransactionRedirectRequest.getDefaultInstance();
         case 8:
-          return edu.brown.hstore.Hstoreservice.TransactionDebugRequest.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaRequest.getDefaultInstance();
         case 9:
-          return edu.brown.hstore.Hstoreservice.SendDataRequest.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.TransactionDebugRequest.getDefaultInstance();
         case 10:
-          return edu.brown.hstore.Hstoreservice.InitializeRequest.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.SendDataRequest.getDefaultInstance();
         case 11:
-          return edu.brown.hstore.Hstoreservice.ShutdownPrepareRequest.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.InitializeRequest.getDefaultInstance();
         case 12:
-          return edu.brown.hstore.Hstoreservice.ShutdownRequest.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.ShutdownPrepareRequest.getDefaultInstance();
         case 13:
-          return edu.brown.hstore.Hstoreservice.HeartbeatRequest.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.ShutdownRequest.getDefaultInstance();
         case 14:
-          return edu.brown.hstore.Hstoreservice.TimeSyncRequest.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.HeartbeatRequest.getDefaultInstance();
         case 15:
-          return edu.brown.hstore.Hstoreservice.ReconfigurationRequest.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.TimeSyncRequest.getDefaultInstance();
         case 16:
-          return edu.brown.hstore.Hstoreservice.DataTransferRequest.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.ReconfigurationRequest.getDefaultInstance();
         case 17:
-          return edu.brown.hstore.Hstoreservice.LivePullRequest.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.DataTransferRequest.getDefaultInstance();
         case 18:
-          return edu.brown.hstore.Hstoreservice.AsyncPullRequest.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.LivePullRequest.getDefaultInstance();
         case 19:
-          return edu.brown.hstore.Hstoreservice.ReconfigurationControlRequest.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.AsyncPullRequest.getDefaultInstance();
         case 20:
+          return edu.brown.hstore.Hstoreservice.ReconfigurationControlRequest.getDefaultInstance();
+        case 21:
           return edu.brown.hstore.Hstoreservice.MultiPullReplyRequest.getDefaultInstance();
         default:
           throw new java.lang.AssertionError("Can't get here.");
@@ -23655,30 +23686,32 @@ public final class Hstoreservice {
         case 7:
           return edu.brown.hstore.Hstoreservice.TransactionRedirectResponse.getDefaultInstance();
         case 8:
-          return edu.brown.hstore.Hstoreservice.TransactionDebugResponse.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse.getDefaultInstance();
         case 9:
-          return edu.brown.hstore.Hstoreservice.SendDataResponse.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.TransactionDebugResponse.getDefaultInstance();
         case 10:
-          return edu.brown.hstore.Hstoreservice.InitializeResponse.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.SendDataResponse.getDefaultInstance();
         case 11:
-          return edu.brown.hstore.Hstoreservice.ShutdownPrepareResponse.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.InitializeResponse.getDefaultInstance();
         case 12:
-          return edu.brown.hstore.Hstoreservice.ShutdownResponse.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.ShutdownPrepareResponse.getDefaultInstance();
         case 13:
-          return edu.brown.hstore.Hstoreservice.HeartbeatResponse.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.ShutdownResponse.getDefaultInstance();
         case 14:
-          return edu.brown.hstore.Hstoreservice.TimeSyncResponse.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.HeartbeatResponse.getDefaultInstance();
         case 15:
-          return edu.brown.hstore.Hstoreservice.ReconfigurationResponse.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.TimeSyncResponse.getDefaultInstance();
         case 16:
-          return edu.brown.hstore.Hstoreservice.DataTransferResponse.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.ReconfigurationResponse.getDefaultInstance();
         case 17:
-          return edu.brown.hstore.Hstoreservice.LivePullResponse.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.DataTransferResponse.getDefaultInstance();
         case 18:
-          return edu.brown.hstore.Hstoreservice.AsyncPullResponse.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.LivePullResponse.getDefaultInstance();
         case 19:
-          return edu.brown.hstore.Hstoreservice.ReconfigurationControlResponse.getDefaultInstance();
+          return edu.brown.hstore.Hstoreservice.AsyncPullResponse.getDefaultInstance();
         case 20:
+          return edu.brown.hstore.Hstoreservice.ReconfigurationControlResponse.getDefaultInstance();
+        case 21:
           return edu.brown.hstore.Hstoreservice.MultiPullReplyResponse.getDefaultInstance();
         default:
           throw new java.lang.AssertionError("Can't get here.");
@@ -23821,12 +23854,27 @@ public final class Hstoreservice {
             edu.brown.hstore.Hstoreservice.TransactionRedirectResponse.getDefaultInstance()));
       }
       
+      public  void transactionForwardToReplica(
+          com.google.protobuf.RpcController controller,
+          edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaRequest request,
+          com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse> done) {
+        channel.callMethod(
+          getDescriptor().getMethods().get(8),
+          controller,
+          request,
+          edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse.getDefaultInstance(),
+          com.google.protobuf.RpcUtil.generalizeCallback(
+            done,
+            edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse.class,
+            edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse.getDefaultInstance()));
+      }
+      
       public  void transactionDebug(
           com.google.protobuf.RpcController controller,
           edu.brown.hstore.Hstoreservice.TransactionDebugRequest request,
           com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.TransactionDebugResponse> done) {
         channel.callMethod(
-          getDescriptor().getMethods().get(8),
+          getDescriptor().getMethods().get(9),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.TransactionDebugResponse.getDefaultInstance(),
@@ -23841,7 +23889,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.SendDataRequest request,
           com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.SendDataResponse> done) {
         channel.callMethod(
-          getDescriptor().getMethods().get(9),
+          getDescriptor().getMethods().get(10),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.SendDataResponse.getDefaultInstance(),
@@ -23856,7 +23904,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.InitializeRequest request,
           com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.InitializeResponse> done) {
         channel.callMethod(
-          getDescriptor().getMethods().get(10),
+          getDescriptor().getMethods().get(11),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.InitializeResponse.getDefaultInstance(),
@@ -23871,7 +23919,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.ShutdownPrepareRequest request,
           com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.ShutdownPrepareResponse> done) {
         channel.callMethod(
-          getDescriptor().getMethods().get(11),
+          getDescriptor().getMethods().get(12),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.ShutdownPrepareResponse.getDefaultInstance(),
@@ -23886,7 +23934,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.ShutdownRequest request,
           com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.ShutdownResponse> done) {
         channel.callMethod(
-          getDescriptor().getMethods().get(12),
+          getDescriptor().getMethods().get(13),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.ShutdownResponse.getDefaultInstance(),
@@ -23901,7 +23949,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.HeartbeatRequest request,
           com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.HeartbeatResponse> done) {
         channel.callMethod(
-          getDescriptor().getMethods().get(13),
+          getDescriptor().getMethods().get(14),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.HeartbeatResponse.getDefaultInstance(),
@@ -23916,7 +23964,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.TimeSyncRequest request,
           com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.TimeSyncResponse> done) {
         channel.callMethod(
-          getDescriptor().getMethods().get(14),
+          getDescriptor().getMethods().get(15),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.TimeSyncResponse.getDefaultInstance(),
@@ -23931,7 +23979,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.ReconfigurationRequest request,
           com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.ReconfigurationResponse> done) {
         channel.callMethod(
-          getDescriptor().getMethods().get(15),
+          getDescriptor().getMethods().get(16),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.ReconfigurationResponse.getDefaultInstance(),
@@ -23946,7 +23994,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.DataTransferRequest request,
           com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.DataTransferResponse> done) {
         channel.callMethod(
-          getDescriptor().getMethods().get(16),
+          getDescriptor().getMethods().get(17),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.DataTransferResponse.getDefaultInstance(),
@@ -23961,7 +24009,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.LivePullRequest request,
           com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.LivePullResponse> done) {
         channel.callMethod(
-          getDescriptor().getMethods().get(17),
+          getDescriptor().getMethods().get(18),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.LivePullResponse.getDefaultInstance(),
@@ -23976,7 +24024,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.AsyncPullRequest request,
           com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.AsyncPullResponse> done) {
         channel.callMethod(
-          getDescriptor().getMethods().get(18),
+          getDescriptor().getMethods().get(19),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.AsyncPullResponse.getDefaultInstance(),
@@ -23991,7 +24039,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.ReconfigurationControlRequest request,
           com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.ReconfigurationControlResponse> done) {
         channel.callMethod(
-          getDescriptor().getMethods().get(19),
+          getDescriptor().getMethods().get(20),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.ReconfigurationControlResponse.getDefaultInstance(),
@@ -24006,7 +24054,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.MultiPullReplyRequest request,
           com.google.protobuf.RpcCallback<edu.brown.hstore.Hstoreservice.MultiPullReplyResponse> done) {
         channel.callMethod(
-          getDescriptor().getMethods().get(20),
+          getDescriptor().getMethods().get(21),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.MultiPullReplyResponse.getDefaultInstance(),
@@ -24061,6 +24109,11 @@ public final class Hstoreservice {
       public edu.brown.hstore.Hstoreservice.TransactionRedirectResponse transactionRedirect(
           com.google.protobuf.RpcController controller,
           edu.brown.hstore.Hstoreservice.TransactionRedirectRequest request)
+          throws com.google.protobuf.ServiceException;
+      
+      public edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse transactionForwardToReplica(
+          com.google.protobuf.RpcController controller,
+          edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaRequest request)
           throws com.google.protobuf.ServiceException;
       
       public edu.brown.hstore.Hstoreservice.TransactionDebugResponse transactionDebug(
@@ -24232,12 +24285,24 @@ public final class Hstoreservice {
       }
       
       
+      public edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse transactionForwardToReplica(
+          com.google.protobuf.RpcController controller,
+          edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaRequest request)
+          throws com.google.protobuf.ServiceException {
+        return (edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse) channel.callBlockingMethod(
+          getDescriptor().getMethods().get(8),
+          controller,
+          request,
+          edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse.getDefaultInstance());
+      }
+      
+      
       public edu.brown.hstore.Hstoreservice.TransactionDebugResponse transactionDebug(
           com.google.protobuf.RpcController controller,
           edu.brown.hstore.Hstoreservice.TransactionDebugRequest request)
           throws com.google.protobuf.ServiceException {
         return (edu.brown.hstore.Hstoreservice.TransactionDebugResponse) channel.callBlockingMethod(
-          getDescriptor().getMethods().get(8),
+          getDescriptor().getMethods().get(9),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.TransactionDebugResponse.getDefaultInstance());
@@ -24249,7 +24314,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.SendDataRequest request)
           throws com.google.protobuf.ServiceException {
         return (edu.brown.hstore.Hstoreservice.SendDataResponse) channel.callBlockingMethod(
-          getDescriptor().getMethods().get(9),
+          getDescriptor().getMethods().get(10),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.SendDataResponse.getDefaultInstance());
@@ -24261,7 +24326,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.InitializeRequest request)
           throws com.google.protobuf.ServiceException {
         return (edu.brown.hstore.Hstoreservice.InitializeResponse) channel.callBlockingMethod(
-          getDescriptor().getMethods().get(10),
+          getDescriptor().getMethods().get(11),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.InitializeResponse.getDefaultInstance());
@@ -24273,7 +24338,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.ShutdownPrepareRequest request)
           throws com.google.protobuf.ServiceException {
         return (edu.brown.hstore.Hstoreservice.ShutdownPrepareResponse) channel.callBlockingMethod(
-          getDescriptor().getMethods().get(11),
+          getDescriptor().getMethods().get(12),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.ShutdownPrepareResponse.getDefaultInstance());
@@ -24285,7 +24350,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.ShutdownRequest request)
           throws com.google.protobuf.ServiceException {
         return (edu.brown.hstore.Hstoreservice.ShutdownResponse) channel.callBlockingMethod(
-          getDescriptor().getMethods().get(12),
+          getDescriptor().getMethods().get(13),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.ShutdownResponse.getDefaultInstance());
@@ -24297,7 +24362,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.HeartbeatRequest request)
           throws com.google.protobuf.ServiceException {
         return (edu.brown.hstore.Hstoreservice.HeartbeatResponse) channel.callBlockingMethod(
-          getDescriptor().getMethods().get(13),
+          getDescriptor().getMethods().get(14),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.HeartbeatResponse.getDefaultInstance());
@@ -24309,7 +24374,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.TimeSyncRequest request)
           throws com.google.protobuf.ServiceException {
         return (edu.brown.hstore.Hstoreservice.TimeSyncResponse) channel.callBlockingMethod(
-          getDescriptor().getMethods().get(14),
+          getDescriptor().getMethods().get(15),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.TimeSyncResponse.getDefaultInstance());
@@ -24321,7 +24386,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.ReconfigurationRequest request)
           throws com.google.protobuf.ServiceException {
         return (edu.brown.hstore.Hstoreservice.ReconfigurationResponse) channel.callBlockingMethod(
-          getDescriptor().getMethods().get(15),
+          getDescriptor().getMethods().get(16),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.ReconfigurationResponse.getDefaultInstance());
@@ -24333,7 +24398,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.DataTransferRequest request)
           throws com.google.protobuf.ServiceException {
         return (edu.brown.hstore.Hstoreservice.DataTransferResponse) channel.callBlockingMethod(
-          getDescriptor().getMethods().get(16),
+          getDescriptor().getMethods().get(17),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.DataTransferResponse.getDefaultInstance());
@@ -24345,7 +24410,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.LivePullRequest request)
           throws com.google.protobuf.ServiceException {
         return (edu.brown.hstore.Hstoreservice.LivePullResponse) channel.callBlockingMethod(
-          getDescriptor().getMethods().get(17),
+          getDescriptor().getMethods().get(18),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.LivePullResponse.getDefaultInstance());
@@ -24357,7 +24422,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.AsyncPullRequest request)
           throws com.google.protobuf.ServiceException {
         return (edu.brown.hstore.Hstoreservice.AsyncPullResponse) channel.callBlockingMethod(
-          getDescriptor().getMethods().get(18),
+          getDescriptor().getMethods().get(19),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.AsyncPullResponse.getDefaultInstance());
@@ -24369,7 +24434,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.ReconfigurationControlRequest request)
           throws com.google.protobuf.ServiceException {
         return (edu.brown.hstore.Hstoreservice.ReconfigurationControlResponse) channel.callBlockingMethod(
-          getDescriptor().getMethods().get(19),
+          getDescriptor().getMethods().get(20),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.ReconfigurationControlResponse.getDefaultInstance());
@@ -24381,7 +24446,7 @@ public final class Hstoreservice {
           edu.brown.hstore.Hstoreservice.MultiPullReplyRequest request)
           throws com.google.protobuf.ServiceException {
         return (edu.brown.hstore.Hstoreservice.MultiPullReplyResponse) channel.callBlockingMethod(
-          getDescriptor().getMethods().get(20),
+          getDescriptor().getMethods().get(21),
           controller,
           request,
           edu.brown.hstore.Hstoreservice.MultiPullReplyResponse.getDefaultInstance());
@@ -24821,7 +24886,7 @@ public final class Hstoreservice {
       "rationControlType\022\021\n\rPULL_RECEIVED\020\000\022\030\n\024",
       "RECONFIGURATION_DONE\020\001\022!\n\035RECONFIGURATIO" +
       "N_DONE_RECEIVED\020\002\022\022\n\016CHUNK_RECEIVED\020\003\022\035\n" +
-      "\031NEXT_RECONFIGURATION_PLAN\020\0042\317\020\n\rHStoreS" +
+      "\031NEXT_RECONFIGURATION_PLAN\020\0042\334\021\n\rHStoreS" +
       "ervice\022f\n\017TransactionInit\022(.edu.brown.hs" +
       "tore.TransactionInitRequest\032).edu.brown." +
       "hstore.TransactionInitResponse\022f\n\017Transa" +
@@ -24844,37 +24909,41 @@ public final class Hstoreservice {
       "shResponse\022r\n\023TransactionRedirect\022,.edu." +
       "brown.hstore.TransactionRedirectRequest\032" +
       "-.edu.brown.hstore.TransactionRedirectRe" +
-      "sponse\022i\n\020TransactionDebug\022).edu.brown.h" +
-      "store.TransactionDebugRequest\032*.edu.brow" +
-      "n.hstore.TransactionDebugResponse\022Q\n\010Sen" +
-      "dData\022!.edu.brown.hstore.SendDataRequest" +
-      "\032\".edu.brown.hstore.SendDataResponse\022W\n\n",
-      "Initialize\022#.edu.brown.hstore.Initialize" +
-      "Request\032$.edu.brown.hstore.InitializeRes" +
-      "ponse\022f\n\017ShutdownPrepare\022(.edu.brown.hst" +
-      "ore.ShutdownPrepareRequest\032).edu.brown.h" +
-      "store.ShutdownPrepareResponse\022Q\n\010Shutdow" +
-      "n\022!.edu.brown.hstore.ShutdownRequest\032\".e" +
-      "du.brown.hstore.ShutdownResponse\022T\n\tHear" +
-      "tbeat\022\".edu.brown.hstore.HeartbeatReques" +
-      "t\032#.edu.brown.hstore.HeartbeatResponse\022Q" +
-      "\n\010TimeSync\022!.edu.brown.hstore.TimeSyncRe",
-      "quest\032\".edu.brown.hstore.TimeSyncRespons" +
-      "e\022f\n\017Reconfiguration\022(.edu.brown.hstore." +
-      "ReconfigurationRequest\032).edu.brown.hstor" +
-      "e.ReconfigurationResponse\022]\n\014DataTransfe" +
-      "r\022%.edu.brown.hstore.DataTransferRequest" +
-      "\032&.edu.brown.hstore.DataTransferResponse" +
-      "\022Q\n\010LivePull\022!.edu.brown.hstore.LivePull" +
-      "Request\032\".edu.brown.hstore.LivePullRespo" +
-      "nse\022T\n\tAsyncPull\022\".edu.brown.hstore.Asyn" +
-      "cPullRequest\032#.edu.brown.hstore.AsyncPul",
-      "lResponse\022~\n\031ReconfigurationControlMsg\022/" +
-      ".edu.brown.hstore.ReconfigurationControl" +
-      "Request\0320.edu.brown.hstore.Reconfigurati" +
-      "onControlResponse\022c\n\016MultiPullReply\022\'.ed" +
-      "u.brown.hstore.MultiPullReplyRequest\032(.e" +
-      "du.brown.hstore.MultiPullReplyResponse"
+      "sponse\022\212\001\n\033TransactionForwardToReplica\0224" +
+      ".edu.brown.hstore.TransactionForwardToRe" +
+      "plicaRequest\0325.edu.brown.hstore.Transact" +
+      "ionForwardToReplicaResponse\022i\n\020Transacti" +
+      "onDebug\022).edu.brown.hstore.TransactionDe",
+      "bugRequest\032*.edu.brown.hstore.Transactio" +
+      "nDebugResponse\022Q\n\010SendData\022!.edu.brown.h" +
+      "store.SendDataRequest\032\".edu.brown.hstore" +
+      ".SendDataResponse\022W\n\nInitialize\022#.edu.br" +
+      "own.hstore.InitializeRequest\032$.edu.brown" +
+      ".hstore.InitializeResponse\022f\n\017ShutdownPr" +
+      "epare\022(.edu.brown.hstore.ShutdownPrepare" +
+      "Request\032).edu.brown.hstore.ShutdownPrepa" +
+      "reResponse\022Q\n\010Shutdown\022!.edu.brown.hstor" +
+      "e.ShutdownRequest\032\".edu.brown.hstore.Shu",
+      "tdownResponse\022T\n\tHeartbeat\022\".edu.brown.h" +
+      "store.HeartbeatRequest\032#.edu.brown.hstor" +
+      "e.HeartbeatResponse\022Q\n\010TimeSync\022!.edu.br" +
+      "own.hstore.TimeSyncRequest\032\".edu.brown.h" +
+      "store.TimeSyncResponse\022f\n\017Reconfiguratio" +
+      "n\022(.edu.brown.hstore.ReconfigurationRequ" +
+      "est\032).edu.brown.hstore.ReconfigurationRe" +
+      "sponse\022]\n\014DataTransfer\022%.edu.brown.hstor" +
+      "e.DataTransferRequest\032&.edu.brown.hstore" +
+      ".DataTransferResponse\022Q\n\010LivePull\022!.edu.",
+      "brown.hstore.LivePullRequest\032\".edu.brown" +
+      ".hstore.LivePullResponse\022T\n\tAsyncPull\022\"." +
+      "edu.brown.hstore.AsyncPullRequest\032#.edu." +
+      "brown.hstore.AsyncPullResponse\022~\n\031Reconf" +
+      "igurationControlMsg\022/.edu.brown.hstore.R" +
+      "econfigurationControlRequest\0320.edu.brown" +
+      ".hstore.ReconfigurationControlResponse\022c" +
+      "\n\016MultiPullReply\022\'.edu.brown.hstore.Mult" +
+      "iPullReplyRequest\032(.edu.brown.hstore.Mul" +
+      "tiPullReplyResponse"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
