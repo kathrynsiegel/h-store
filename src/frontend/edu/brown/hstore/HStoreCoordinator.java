@@ -66,6 +66,7 @@ import edu.brown.hstore.Hstoreservice.TransactionDebugRequest;
 import edu.brown.hstore.Hstoreservice.TransactionDebugResponse;
 import edu.brown.hstore.Hstoreservice.TransactionFinishRequest;
 import edu.brown.hstore.Hstoreservice.TransactionFinishResponse;
+import edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaRequest;
 import edu.brown.hstore.Hstoreservice.TransactionInitRequest;
 import edu.brown.hstore.Hstoreservice.TransactionInitResponse;
 import edu.brown.hstore.Hstoreservice.TransactionMapRequest;
@@ -686,10 +687,10 @@ public class HStoreCoordinator implements Shutdownable {
             }
         }
         
-        //@Override
-//        public void transactionForwardToReplica(RpcController controller, TransactionForwardToReplicaRequest request, RpcCallback<TransactionForwardToReplicaResponse> done) {
-//        	// TODO(katie) implement
-//        }
+        @Override
+        public void transactionForwardToReplica(RpcController controller, TransactionForwardToReplicaRequest request, RpcCallback<TransactionForwardToReplicaResponse> done) {
+        	// TODO(katie) implement 
+        }
         
         @Override
         public void sendData(RpcController controller, SendDataRequest request, RpcCallback<SendDataResponse> done) {
