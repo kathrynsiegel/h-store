@@ -1,7 +1,5 @@
 package edu.brown.hstore.callbacks;
 
-package edu.brown.hstore.callbacks;
-
 import java.io.IOException;
 
 import org.apache.log4j.Logger;
