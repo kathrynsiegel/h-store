@@ -67,6 +67,7 @@ import edu.brown.hstore.Hstoreservice.TransactionDebugResponse;
 import edu.brown.hstore.Hstoreservice.TransactionFinishRequest;
 import edu.brown.hstore.Hstoreservice.TransactionFinishResponse;
 import edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaRequest;
+import edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse;
 import edu.brown.hstore.Hstoreservice.TransactionInitRequest;
 import edu.brown.hstore.Hstoreservice.TransactionInitResponse;
 import edu.brown.hstore.Hstoreservice.TransactionMapRequest;
@@ -688,11 +689,6 @@ public class HStoreCoordinator implements Shutdownable {
         }
         
         @Override
-        public void transactionForwardToReplica(RpcController controller, TransactionForwardToReplicaRequest request, RpcCallback<TransactionForwardToReplicaResponse> done) {
-        	// TODO(katie) implement 
-        }
-        
-        @Override
         public void sendData(RpcController controller, SendDataRequest request, RpcCallback<SendDataResponse> done) {
             // Take the SendDataRequest and pass it to the sendData_handler, which
             // will deserialize the embedded VoltTable and wrap it in something that we can
@@ -961,6 +957,14 @@ public class HStoreCoordinator implements Shutdownable {
         	}
           
         }
+
+		@Override
+		public void transactionForwardToReplica(RpcController controller,
+				TransactionForwardToReplicaRequest request,
+				RpcCallback<TransactionForwardToReplicaResponse> done) {
+			// TODO Auto-generated method stub
+			
+		}
         
 
 

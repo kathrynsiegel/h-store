@@ -2707,7 +2707,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         // homeboy here...
         
         // We know txn is ready to execute on primary, but we first need to send to replicas
-        //hstore_coordinator.transactionForwardToReplica(ts); // todo(Katie) will be generated
+        hstore_coordinator.transactionReplicate();
         
         if (hstore_conf.site.txn_profiling && ts.profiler != null) {
             ts.profiler.startExec();

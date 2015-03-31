@@ -34,6 +34,8 @@ import edu.brown.hstore.Hstoreservice.TransactionDebugRequest;
 import edu.brown.hstore.Hstoreservice.TransactionDebugResponse;
 import edu.brown.hstore.Hstoreservice.TransactionFinishRequest;
 import edu.brown.hstore.Hstoreservice.TransactionFinishResponse;
+import edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaRequest;
+import edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse;
 import edu.brown.hstore.Hstoreservice.TransactionInitRequest;
 import edu.brown.hstore.Hstoreservice.TransactionInitResponse;
 import edu.brown.hstore.Hstoreservice.TransactionMapRequest;
@@ -256,6 +258,14 @@ public class MockHStoreCoordinator extends HStoreCoordinator {
 		@Override
 		public void asyncPull(RpcController controller,
 				AsyncPullRequest request, RpcCallback<AsyncPullResponse> done) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void transactionForwardToReplica(RpcController controller,
+				TransactionForwardToReplicaRequest request,
+				RpcCallback<TransactionForwardToReplicaResponse> done) {
 			// TODO Auto-generated method stub
 			
 		}
