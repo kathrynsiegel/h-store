@@ -196,6 +196,7 @@ import edu.brown.hstore.specexec.checkers.TableConflictChecker;
 import edu.brown.hstore.specexec.checkers.UnsafeConflictChecker;
 import edu.brown.hstore.txns.AbstractTransaction;
 import edu.brown.hstore.txns.DependencyTracker;
+import edu.brown.hstore.txns.ForwardedTransaction;
 import edu.brown.hstore.txns.LocalTransaction;
 import edu.brown.hstore.txns.MapReduceTransaction;
 import edu.brown.hstore.txns.PrefetchState;
@@ -2713,10 +2714,10 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         // We know txn is ready to execute on primary, but we first need to send to replicas
         // test if is primary
         ForwardedTransaction replicaTransaction = new ForwardedTransaction(hstore_site);
-        RpcCallback<TransactionForwardToReplicaResponse> client_callback = new RpcCallback<TransactionForwardToReplicaResponse>() {
+        RpcCallback<TransactionForwardToReplicaResponse> replica_callback = new RpcCallback<TransactionForwardToReplicaResponse>() {
             @Override
             public void run(TransactionForwardToReplicaResponse response) {
-                asdf
+                System.out.println("successfully reached replica callback");
             }
         };  // TODO(Katie)
         		
@@ -2725,7 +2726,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		replicaTransaction.init(ts.getTransactionId(), EstTime.currentTimeMillis(), 
 				ts.getClientHandle(), this.partitionId, ts.getPredictTouchedPartitions(), 
 				false, false, ts.getProcedure(), 
-				ts.getProcedureParameters(), client_callback);
+				ts.getProcedureParameters(), null, replica_callback);
                                                                                                                  
         hstore_coordinator.transactionReplicate(replicaTransaction);
         

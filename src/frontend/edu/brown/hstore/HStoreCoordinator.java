@@ -105,6 +105,7 @@ import edu.brown.hstore.handlers.TransactionWorkHandler;
 import edu.brown.hstore.specexec.PrefetchQueryPlanner;
 import edu.brown.hstore.txns.AbstractTransaction;
 import edu.brown.hstore.txns.DependencyTracker;
+import edu.brown.hstore.txns.ForwardedTransaction;
 import edu.brown.hstore.txns.LocalTransaction;
 import edu.brown.hstore.txns.RemoteTransaction;
 import edu.brown.hstore.txns.TransactionUtil;
@@ -700,6 +701,7 @@ public class HStoreCoordinator implements Shutdownable {
             TransactionForwardToReplicaResponse.Builder builder = TransactionForwardToReplicaResponse.newBuilder()
                                                     .setSenderSite(local_site_id);
             done.run(builder.build());
+            System.out.println("should now send to replica");
     	}
         
         @Override
@@ -1460,11 +1462,11 @@ public class HStoreCoordinator implements Shutdownable {
     	List<Integer> replicas = this.hstore_site.getPartitionReplicas(replicaTransaction.getBasePartition());
     	TransactionForwardToReplicaRequest request = TransactionForwardToReplicaRequest.newBuilder()
     			.setSenderSite(this.local_site_id).build();
-		for (int site_id : replicas) {
+		for (int site_id : replicas) { // todo(Katie) map partitions to site_id
 			if (site_id == this.local_site_id) continue;
 			if (this.isShuttingDown()) break;
 			try {
-				this.remoteService.transactionForwardToReplica(new ProtoRpcController(), request, replicaTransaction.getClientCallback());
+				this.remoteService.transactionForwardToReplica(new ProtoRpcController(), request, replicaTransaction.getReplicaCallback());
 			} catch (RuntimeException ex) {
 				// Silently ignore these errors...
 			}

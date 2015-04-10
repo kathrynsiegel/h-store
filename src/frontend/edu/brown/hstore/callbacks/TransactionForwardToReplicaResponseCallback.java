@@ -76,11 +76,11 @@ public class TransactionForwardToReplicaResponseCallback<TransactionForwardToRep
             throw new RuntimeException(ex);
         }
         ByteString bs = ByteString.copyFrom(fs.getBuffer());
-        TransactionForwardToReplicaResponse response = TransactionForwardToReplicaResponse.newBuilder()
-                                                              .setSenderSite(this.sourceSiteId)
-                                                              .setOutput(bs)
-                                                              .build();
-        this.orig_callback.run(response);
+//        TransactionForwardToReplicaResponse response = TransactionForwardToReplicaResponse.newBuilder()
+//                                                              .setSenderSite(this.sourceSiteId)
+//                                                              .setOutput(bs)
+//                                                              .build();
+//        this.orig_callback.run(response);
         if (debug.val)
             LOG.debug(String.format("Sent back ClientResponse for txn #%d to %s [bytes=%d]",
                       parameter.getTransactionId(), HStoreThreadManager.formatSiteName(this.destSiteId),

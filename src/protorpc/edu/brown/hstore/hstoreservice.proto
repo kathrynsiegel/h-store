@@ -374,6 +374,7 @@ message TransactionForwardToReplicaRequest {
     required bytes work = 2;
     required int64 txn_id = 3;
     required int32 base_partition = 4;
+    required int32 destination_partition = 5;
 }
 
 message TransactionForwardToReplicaResponse {
