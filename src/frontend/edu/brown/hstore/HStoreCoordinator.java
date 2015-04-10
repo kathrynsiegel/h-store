@@ -14,6 +14,7 @@ import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.log4j.Logger;
 import org.voltdb.CatalogContext;
 import org.voltdb.ParameterSet;
@@ -700,8 +701,10 @@ public class HStoreCoordinator implements Shutdownable {
                           HStoreThreadManager.formatSiteName(request.getSenderSite())));
             TransactionForwardToReplicaResponse.Builder builder = TransactionForwardToReplicaResponse.newBuilder()
                                                     .setSenderSite(local_site_id);
+            
+            System.out.println("coordinator will send to replica");
+            
             done.run(builder.build());
-            System.out.println("should now send to replica");
     	}
         
         @Override
@@ -1459,14 +1462,24 @@ public class HStoreCoordinator implements Shutdownable {
     // REPLICATION
     // ----------------------------------------------------------------------------
     public void transactionReplicate(ForwardedTransaction replicaTransaction) {
-    	List<Integer> replicas = this.hstore_site.getPartitionReplicas(replicaTransaction.getBasePartition());
-    	TransactionForwardToReplicaRequest request = TransactionForwardToReplicaRequest.newBuilder()
-    			.setSenderSite(this.local_site_id).build();
-		for (int site_id : replicas) { // todo(Katie) map partitions to site_id
-			if (site_id == this.local_site_id) continue;
+    	List<Integer> replica_sites = this.hstore_site.getPartitionReplicas(replicaTransaction.getBasePartition());
+    	List<Integer> replica_partitions = new ArrayList<Integer>();
+    	for (int i = 0; i < replica_sites.size(); i++) { //todo(katie) extract into separate method
+    		replica_partitions.add(this.hstore_site.getCatalogContext().getSiteIdForPartitionId(replica_partitions.get(i)));
+    	}
+		for (int j = 0; j < replica_sites.size(); j++) { 
+			if (j == this.local_site_id) {
+				throw new NotImplementedException();
+			}
 			if (this.isShuttingDown()) break;
 			try {
-				this.remoteService.transactionForwardToReplica(new ProtoRpcController(), request, replicaTransaction.getReplicaCallback());
+				TransactionForwardToReplicaRequest request = TransactionForwardToReplicaRequest.newBuilder()
+		    			.setSenderSite(this.local_site_id)
+		    			.setWork(null)
+		    			.setTxnId(replicaTransaction.getTransactionId())
+		    			.setBasePartition(replicaTransaction.getBasePartition())
+		    			.setDestinationPartition(replica_partitions.get(j)).build();
+				this.channels[replica_sites.get(j)].transactionForwardToReplica(new ProtoRpcController(), request, replicaTransaction.getReplicaCallback());
 			} catch (RuntimeException ex) {
 				// Silently ignore these errors...
 			}
