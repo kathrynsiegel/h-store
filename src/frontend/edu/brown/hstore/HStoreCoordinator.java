@@ -699,12 +699,13 @@ public class HStoreCoordinator implements Shutdownable {
                 LOG.debug(String.format("Received %s from HStoreSite %s",
                           request.getClass().getSimpleName(),
                           HStoreThreadManager.formatSiteName(request.getSenderSite())));
-            TransactionForwardToReplicaResponse.Builder builder = TransactionForwardToReplicaResponse.newBuilder()
-                                                    .setSenderSite(local_site_id);
+            TransactionForwardToReplicaResponse response = TransactionForwardToReplicaResponse.newBuilder()
+                                                    .setSenderSite(local_site_id).setOutput(null).build();
             
-            System.out.println("coordinator will send to replica");
+            LOG.info("coordinator will send to replica");
             
-            done.run(builder.build());
+            
+            done.run(response);
     	}
         
         @Override

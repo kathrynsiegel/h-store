@@ -2717,7 +2717,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         RpcCallback<TransactionForwardToReplicaResponse> replica_callback = new RpcCallback<TransactionForwardToReplicaResponse>() {
             @Override
             public void run(TransactionForwardToReplicaResponse response) {
-                System.out.println("successfully reached replica callback");
+                LOG.info("successfully reached replica callback");
             }
         };  // TODO(Katie)
         		
