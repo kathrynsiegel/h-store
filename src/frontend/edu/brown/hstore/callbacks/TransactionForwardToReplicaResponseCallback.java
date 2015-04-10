@@ -23,7 +23,7 @@ import edu.brown.pools.Poolable;
  * results back to the client
  * @author ksiegel
  */
-public class TransactionForwardToReplicaResponseCallback implements RpcCallback<ClientResponseImpl>, Poolable {
+public class TransactionForwardToReplicaResponseCallback<TransactionForwardToReplicaResponse> implements RpcCallback<ClientResponseImpl>, Poolable {
     private static final Logger LOG = Logger.getLogger(TransactionForwardToReplicaResponseCallback.class);
     private static final LoggerBoolean debug = new LoggerBoolean();
     private static final LoggerBoolean trace = new LoggerBoolean();

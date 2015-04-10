@@ -134,6 +134,7 @@ import edu.brown.hashing.ReconfigurationPlan;
 import edu.brown.hashing.ReconfigurationPlan.ReconfigurationRange;
 import edu.brown.hstore.Hstoreservice.AsyncPullRequest;
 import edu.brown.hstore.Hstoreservice.AsyncPullResponse;
+import edu.brown.hstore.Hstoreservice.HeartbeatResponse;
 import edu.brown.hstore.Hstoreservice.LivePullRequest;
 import edu.brown.hstore.Hstoreservice.LivePullResponse;
 import edu.brown.hstore.Hstoreservice.MultiPullReplyRequest;
@@ -142,16 +143,19 @@ import edu.brown.hstore.Hstoreservice.QueryEstimate;
 import edu.brown.hstore.Hstoreservice.ReconfigurationControlRequest;
 import edu.brown.hstore.Hstoreservice.ReconfigurationControlType;
 import edu.brown.hstore.Hstoreservice.Status;
+import edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse;
 import edu.brown.hstore.Hstoreservice.TransactionPrefetchResult;
 import edu.brown.hstore.Hstoreservice.TransactionPrepareResponse;
 import edu.brown.hstore.Hstoreservice.TransactionWorkRequest;
 import edu.brown.hstore.Hstoreservice.TransactionWorkResponse;
 import edu.brown.hstore.Hstoreservice.WorkFragment;
 import edu.brown.hstore.Hstoreservice.WorkResult;
+import edu.brown.hstore.callbacks.BlockingRpcCallback;
 import edu.brown.hstore.callbacks.LocalFinishCallback;
 import edu.brown.hstore.callbacks.LocalPrepareCallback;
 import edu.brown.hstore.callbacks.PartitionCountingCallback;
 import edu.brown.hstore.callbacks.RemotePrepareCallback;
+import edu.brown.hstore.callbacks.TransactionForwardToReplicaResponseCallback;
 import edu.brown.hstore.conf.HStoreConf;
 import edu.brown.hstore.estimators.Estimate;
 import edu.brown.hstore.estimators.EstimatorState;
@@ -2707,7 +2711,23 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         // homeboy here...
         
         // We know txn is ready to execute on primary, but we first need to send to replicas
-        hstore_coordinator.transactionReplicate();
+        // test if is primary
+        ForwardedTransaction replicaTransaction = new ForwardedTransaction(hstore_site);
+        RpcCallback<TransactionForwardToReplicaResponse> client_callback = new RpcCallback<TransactionForwardToReplicaResponse>() {
+            @Override
+            public void run(TransactionForwardToReplicaResponse response) {
+                asdf
+            }
+        };  // TODO(Katie)
+        		
+//        TransactionForwardToReplicaResponseCallback<TransactionForwardToReplicaResponse> client_callback = new TransactionForwardToReplicaResponseCallback<TransactionForwardToReplicaResponse>(hstore_site);
+		
+		replicaTransaction.init(ts.getTransactionId(), EstTime.currentTimeMillis(), 
+				ts.getClientHandle(), this.partitionId, ts.getPredictTouchedPartitions(), 
+				false, false, ts.getProcedure(), 
+				ts.getProcedureParameters(), client_callback);
+                                                                                                                 
+        hstore_coordinator.transactionReplicate(replicaTransaction);
         
         if (hstore_conf.site.txn_profiling && ts.profiler != null) {
             ts.profiler.startExec();

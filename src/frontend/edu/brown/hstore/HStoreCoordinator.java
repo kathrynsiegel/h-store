@@ -83,9 +83,11 @@ import edu.brown.hstore.Hstoreservice.TransactionReduceResponse;
 import edu.brown.hstore.Hstoreservice.TransactionWorkRequest;
 import edu.brown.hstore.Hstoreservice.TransactionWorkResponse;
 import edu.brown.hstore.Hstoreservice.WorkFragment;
+import edu.brown.hstore.callbacks.BlockingRpcCallback;
 import edu.brown.hstore.callbacks.LocalFinishCallback;
 import edu.brown.hstore.callbacks.LocalPrepareCallback;
 import edu.brown.hstore.callbacks.ShutdownPrepareCallback;
+import edu.brown.hstore.callbacks.TransactionForwardToReplicaResponseCallback;
 import edu.brown.hstore.callbacks.TransactionPrefetchCallback;
 import edu.brown.hstore.callbacks.TransactionRedirectResponseCallback;
 import edu.brown.hstore.conf.HStoreConf;
@@ -689,6 +691,18 @@ public class HStoreCoordinator implements Shutdownable {
         }
         
         @Override
+    	public void transactionForwardToReplica(RpcController controller, TransactionForwardToReplicaRequest request,
+    	          RpcCallback<TransactionForwardToReplicaResponse> done) {
+        	if (debug.val)
+                LOG.debug(String.format("Received %s from HStoreSite %s",
+                          request.getClass().getSimpleName(),
+                          HStoreThreadManager.formatSiteName(request.getSenderSite())));
+            TransactionForwardToReplicaResponse.Builder builder = TransactionForwardToReplicaResponse.newBuilder()
+                                                    .setSenderSite(local_site_id);
+            done.run(builder.build());
+    	}
+        
+        @Override
         public void sendData(RpcController controller, SendDataRequest request, RpcCallback<SendDataResponse> done) {
             // Take the SendDataRequest and pass it to the sendData_handler, which
             // will deserialize the embedded VoltTable and wrap it in something that we can
@@ -957,14 +971,6 @@ public class HStoreCoordinator implements Shutdownable {
         	}
           
         }
-
-		@Override
-		public void transactionForwardToReplica(RpcController controller,
-				TransactionForwardToReplicaRequest request,
-				RpcCallback<TransactionForwardToReplicaResponse> done) {
-			// TODO Auto-generated method stub
-			
-		}
         
 
 
@@ -1446,6 +1452,24 @@ public class HStoreCoordinator implements Shutdownable {
             }
         } // FOR
     }
+    
+    // ----------------------------------------------------------------------------
+    // REPLICATION
+    // ----------------------------------------------------------------------------
+    public void transactionReplicate(ForwardedTransaction replicaTransaction) {
+    	List<Integer> replicas = this.hstore_site.getPartitionReplicas(replicaTransaction.getBasePartition());
+    	TransactionForwardToReplicaRequest request = TransactionForwardToReplicaRequest.newBuilder()
+    			.setSenderSite(this.local_site_id).build();
+		for (int site_id : replicas) {
+			if (site_id == this.local_site_id) continue;
+			if (this.isShuttingDown()) break;
+			try {
+				this.remoteService.transactionForwardToReplica(new ProtoRpcController(), request, replicaTransaction.getClientCallback());
+			} catch (RuntimeException ex) {
+				// Silently ignore these errors...
+			}
+		} // FOR
+    };
     
     // ----------------------------------------------------------------------------
     // TIME SYNCHRONZIATION

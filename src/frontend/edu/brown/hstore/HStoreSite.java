@@ -1095,6 +1095,14 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
     	assert(this.partitionReplicas != null);
     	return this.partitionReplicas.get(partition) != null;
     }
+    /** Returns the replicas of this partition
+     * @return map of replicas
+     */
+    public List<Integer> getPartitionReplicas(int partition) {
+    	assert(partition >= 0);
+    	assert(this.partitionReplicas != null);
+    	return this.partitionReplicas.get(partition);
+    }
     /**
      * Returns true if the given PartitionSite contains partitions that are
      * all managed by this HStoreSite.
@@ -1781,20 +1789,10 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
             return;
         }
         
-        // -------------------------------
-        // DIRECT TXN TO REPLICAS
-        // -------------------------------
-        // TODO(Katie) probably best to do this elsewhere, after we can make sure the primary receives it.
-        if (this.isPrimaryPartition(base_partition)) {
-        	for (int partitionNum : this.partitionReplicas.get(base_partition)) {
-        		this.transactionRedirect(catalog_proc, buffer, partitionNum, clientCallback);
-            }
-        }
-        
         // 2012-12-24 - We always want the network threads to do the initialization
         if (trace.val)
             LOG.trace("Initializing transaction request using network processing thread");
-        LocalTransaction ts = this.txnInitializer.createLocalTransaction( //TODO(Katie)
+        LocalTransaction ts = this.txnInitializer.createLocalTransaction( 
                                         buffer,
                                         timestamp,
                                         client_handle,
