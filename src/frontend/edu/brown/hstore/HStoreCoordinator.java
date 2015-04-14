@@ -1482,7 +1482,11 @@ public class HStoreCoordinator implements Shutdownable {
 		    			.setBasePartition(replicaTransaction.getBasePartition())
 		    			.setDestinationPartition(replica_partitions.get(j)).build();
 				LOG.info(String.format("sending to replica site %s",replica_sites.get(j)));
-				this.channels[replica_sites.get(j)].transactionForwardToReplica(new ProtoRpcController(), request, replicaTransaction.getReplicaCallback());
+				ProtoRpcController replicaController = new ProtoRpcController();
+				RpcCallback<TransactionForwardToReplicaResponse> callback = replicaTransaction.getReplicaCallback();
+				HStoreService service = this.channels[replica_sites.get(j)];
+				service.transactionForwardToReplica(replicaController, request, callback);
+//				this.channels[replica_sites.get(j)].transactionForwardToReplica(new ProtoRpcController(), request, replicaTransaction.getReplicaCallback());
 			} catch (RuntimeException ex) {
 				StackTraceElement[] stackTrace = ex.getStackTrace();
 				for (int k = 0; k < stackTrace.length; k++) {
