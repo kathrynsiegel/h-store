@@ -695,13 +695,13 @@ public class HStoreCoordinator implements Shutdownable {
         @Override
     	public void transactionForwardToReplica(RpcController controller, TransactionForwardToReplicaRequest request,
     	          RpcCallback<TransactionForwardToReplicaResponse> done) {
-        	LOG.info("about to forward to replica");
+        	LOG.info("got to replica!");
         	if (debug.val)
                 LOG.debug(String.format("Received %s from HStoreSite %s",
                           request.getClass().getSimpleName(),
                           HStoreThreadManager.formatSiteName(request.getSenderSite())));
             TransactionForwardToReplicaResponse response = TransactionForwardToReplicaResponse.newBuilder()
-                                                    .setSenderSite(local_site_id).setOutput(null).build();
+                                                    .setSenderSite(local_site_id).build();
             
             
             LOG.info("coordinator will send to replica");
