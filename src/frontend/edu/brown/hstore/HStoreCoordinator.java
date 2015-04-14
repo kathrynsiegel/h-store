@@ -1467,7 +1467,9 @@ public class HStoreCoordinator implements Shutdownable {
     	LOG.info(String.format("Replica transaction: %s", replicaTransaction));
     	LOG.info(String.format("Replica transaction: %s", replicaTransaction.getBasePartition()));
     	LOG.info(String.format("Replicas: %s", replica_sites));
-      System.out.println(replicaTransaction.getBasePartition());
+    	LOG.debug(String.format("Replica transaction: %s", replicaTransaction.getBasePartition()));
+    	LOG.trace(String.format("Replica transaction: %s", replicaTransaction.getBasePartition()));
+    	System.out.println(replicaTransaction.getBasePartition());
     	ArrayList<Integer> replica_partitions = new ArrayList<Integer>();
     	for (int i = 0; i < replica_sites.size(); i++) { //todo(katie) extract into separate method
     		replica_partitions.add(this.hstore_site.getCatalogContext().getSiteIdForPartitionId(replica_sites.get(i)));
