@@ -1469,15 +1469,12 @@ public class HStoreCoordinator implements Shutdownable {
     	for (int i = 0; i < replica_sites.size(); i++) { //todo(katie) extract into separate method
     		replica_partitions.add(this.hstore_site.getCatalogContext().getSiteIdForPartitionId(replica_sites.get(i)));
     	}
-    	LOG.info(String.format("replica sites: %s",replica_sites));
 		for (int j = 0; j < replica_sites.size(); j++) { 
-			LOG.info(String.format("here about to send to replica site %s", j));
 			if (replica_sites.get(j) == this.local_site_id) {
 				throw new NotImplementedException();
 			}
 			if (this.isShuttingDown()) break;
 			try {
-				LOG.info(String.format("creating request to send to replica"));
 				TransactionForwardToReplicaRequest request = TransactionForwardToReplicaRequest.newBuilder()
 		    			.setSenderSite(this.local_site_id)
 		    			.setWork(null)
@@ -1487,6 +1484,7 @@ public class HStoreCoordinator implements Shutdownable {
 				LOG.info(String.format("sending to replica site %s",replica_sites.get(j)));
 				this.channels[replica_sites.get(j)].transactionForwardToReplica(new ProtoRpcController(), request, replicaTransaction.getReplicaCallback());
 			} catch (RuntimeException ex) {
+				LOG.info(String.format("EXCEPTION %s", ex));
 				// Silently ignore these errors...
 			}
 		} // FOR
