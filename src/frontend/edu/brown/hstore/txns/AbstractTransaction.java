@@ -668,6 +668,7 @@ public abstract class AbstractTransaction implements Poolable, Comparable<Abstra
      * Get the base PartitionId where this txn's Java code is executing on
      */
     public final int getBasePartition() {
+    	LOG.info(String.format("Replica transaction: %s", this.base_partition));
         return this.base_partition;
     }
     /**
