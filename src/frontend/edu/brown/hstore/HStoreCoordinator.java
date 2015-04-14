@@ -1484,7 +1484,7 @@ public class HStoreCoordinator implements Shutdownable {
 				LOG.info(String.format("sending to replica site %s",replica_sites.get(j)));
 				this.channels[replica_sites.get(j)].transactionForwardToReplica(new ProtoRpcController(), request, replicaTransaction.getReplicaCallback());
 			} catch (RuntimeException ex) {
-				LOG.info(String.format("EXCEPTION %s", ex));
+				LOG.info(ex.getStackTrace());
 				// Silently ignore these errors...
 			}
 		} // FOR
