@@ -2713,22 +2713,24 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         
         // We know txn is ready to execute on primary, but we first need to send to replicas
         // test if is primary
-        ForwardedTransaction replicaTransaction = new ForwardedTransaction(hstore_site);
-        RpcCallback<TransactionForwardToReplicaResponse> replica_callback = new RpcCallback<TransactionForwardToReplicaResponse>() {
-            @Override
-            public void run(TransactionForwardToReplicaResponse response) {
-                LOG.info("successfully reached replica callback");
-            }
-        };  // TODO(Katie)
-        		
-//        TransactionForwardToReplicaResponseCallback<TransactionForwardToReplicaResponse> client_callback = new TransactionForwardToReplicaResponseCallback<TransactionForwardToReplicaResponse>(hstore_site);
-		
-		replicaTransaction.init(ts.getTransactionId(), EstTime.currentTimeMillis(), 
-				ts.getClientHandle(), this.partitionId, ts.getPredictTouchedPartitions(), 
-				false, false, ts.getProcedure(), 
-				ts.getProcedureParameters(), null, replica_callback);
-                                                                                                                 
-        hstore_coordinator.transactionReplicate(replicaTransaction);
+        if (this.hstore_site.getPartitionReplicas(ts.getBasePartition()) != null) {
+	        ForwardedTransaction replicaTransaction = new ForwardedTransaction(hstore_site);
+	        RpcCallback<TransactionForwardToReplicaResponse> replica_callback = new RpcCallback<TransactionForwardToReplicaResponse>() {
+	            @Override
+	            public void run(TransactionForwardToReplicaResponse response) {
+	                LOG.info("successfully reached replica callback");
+	            }
+	        };  // TODO(Katie)
+	        		
+	//        TransactionForwardToReplicaResponseCallback<TransactionForwardToReplicaResponse> client_callback = new TransactionForwardToReplicaResponseCallback<TransactionForwardToReplicaResponse>(hstore_site);
+			
+			replicaTransaction.init(ts.getTransactionId(), EstTime.currentTimeMillis(), 
+					ts.getClientHandle(), this.partitionId, ts.getPredictTouchedPartitions(), 
+					false, false, ts.getProcedure(), 
+					ts.getProcedureParameters(), null, replica_callback);
+	                                                                                                                 
+	        hstore_coordinator.transactionReplicate(replicaTransaction);
+        }
         
         if (hstore_conf.site.txn_profiling && ts.profiler != null) {
             ts.profiler.startExec();
