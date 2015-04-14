@@ -2712,18 +2712,15 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         // homeboy here...
         
         // We know txn is ready to execute on primary, but we first need to send to replicas
-        // test if is primary
-        if (this.hstore_site.getPartitionReplicas(ts.getBasePartition()) != null) {
+        if (this.hstore_site.getPartitionReplicas(ts.getBasePartition()) != null) { // TODO(katie) isprimary method
 	        ForwardedTransaction replicaTransaction = new ForwardedTransaction(hstore_site);
 	        RpcCallback<TransactionForwardToReplicaResponse> replica_callback = new RpcCallback<TransactionForwardToReplicaResponse>() {
 	            @Override
 	            public void run(TransactionForwardToReplicaResponse response) {
 	                LOG.info("successfully reached replica callback");
 	            }
-	        };  // TODO(Katie)
-	        		
-	//        TransactionForwardToReplicaResponseCallback<TransactionForwardToReplicaResponse> client_callback = new TransactionForwardToReplicaResponseCallback<TransactionForwardToReplicaResponse>(hstore_site);
-			
+	        }; 
+	        					
 			replicaTransaction.init(ts.getTransactionId(), EstTime.currentTimeMillis(), 
 					ts.getClientHandle(), this.partitionId, ts.getPredictTouchedPartitions(), 
 					false, false, ts.getProcedure(), 

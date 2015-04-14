@@ -695,7 +695,6 @@ public class HStoreCoordinator implements Shutdownable {
         @Override
     	public void transactionForwardToReplica(RpcController controller, TransactionForwardToReplicaRequest request,
     	          RpcCallback<TransactionForwardToReplicaResponse> done) {
-        	LOG.info("got to replica!");
         	if (debug.val)
                 LOG.debug(String.format("Received %s from HStoreSite %s",
                           request.getClass().getSimpleName(),
@@ -704,7 +703,7 @@ public class HStoreCoordinator implements Shutdownable {
                                                     .setSenderSite(local_site_id).build();
             
             
-            LOG.info("coordinator will send to replica");
+            LOG.info("coordinator will now execute");
             
             done.run(response);
     	}
@@ -1480,17 +1479,8 @@ public class HStoreCoordinator implements Shutdownable {
 		    			.setTxnId(replicaTransaction.getTransactionId())
 		    			.setBasePartition(replicaTransaction.getBasePartition())
 		    			.setDestinationPartition(replica_partitions.get(j)).build();
-				LOG.info(String.format("sending to replica site %s",replica_sites.get(j)));
-				ProtoRpcController replicaController = new ProtoRpcController();
-				RpcCallback<TransactionForwardToReplicaResponse> callback = replicaTransaction.getReplicaCallback();
-				HStoreService service = this.channels[replica_sites.get(j)];
-				service.transactionForwardToReplica(replicaController, request, callback);
-//				this.channels[replica_sites.get(j)].transactionForwardToReplica(new ProtoRpcController(), request, replicaTransaction.getReplicaCallback());
+				this.channels[replica_sites.get(j)].transactionForwardToReplica(new ProtoRpcController(), request, replicaTransaction.getReplicaCallback());
 			} catch (RuntimeException ex) {
-				StackTraceElement[] stackTrace = ex.getStackTrace();
-				for (int k = 0; k < stackTrace.length; k++) {
-					LOG.info(stackTrace[k].toString());
-				}
 				// Silently ignore these errors...
 			}
 		} // FOR
