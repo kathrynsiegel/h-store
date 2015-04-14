@@ -1477,7 +1477,6 @@ public class HStoreCoordinator implements Shutdownable {
 			try {
 				TransactionForwardToReplicaRequest request = TransactionForwardToReplicaRequest.newBuilder()
 		    			.setSenderSite(this.local_site_id)
-		    			.setWork(null)
 		    			.setTxnId(replicaTransaction.getTransactionId())
 		    			.setBasePartition(replicaTransaction.getBasePartition())
 		    			.setDestinationPartition(replica_partitions.get(j)).build();
