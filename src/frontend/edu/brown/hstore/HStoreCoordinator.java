@@ -702,10 +702,11 @@ public class HStoreCoordinator implements Shutdownable {
             TransactionForwardToReplicaResponse response = TransactionForwardToReplicaResponse.newBuilder()
                                                     .setSenderSite(local_site_id).setOutput(null).build();
             
+            
             LOG.info("coordinator will send to replica");
+            throw new NotImplementedException();
             
-            
-            done.run(response);
+            // done.run(response);
     	}
         
         @Override
