@@ -705,9 +705,8 @@ public class HStoreCoordinator implements Shutdownable {
             
             
             LOG.info("coordinator will send to replica");
-            throw new NotImplementedException();
             
-            // done.run(response);
+            done.run(response);
     	}
         
         @Override
