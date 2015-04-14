@@ -378,7 +378,6 @@ message TransactionForwardToReplicaRequest {
 
 message TransactionForwardToReplicaResponse {
     required int32 sender_site = 1;
-    required Status status = 2;
 }
 
 // -----------------------------------
