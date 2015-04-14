@@ -666,7 +666,7 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
                 ((TwoTieredRangeHasher)this.hasher).setReconfigCoord(this.reconfiguration_coordinator);
                 this.partitionReplicas = ((TwoTieredRangeHasher)this.hasher).getPartitionReplicas();
             }   
-            LOG.info(String.format("Replicas: %s", partitionReplicas));
+            LOG.info(String.format("Replicas: %s", this.partitionReplicas));
         }
         
         // First we need to tell the HStoreCoordinator to start-up and initialize its connections
