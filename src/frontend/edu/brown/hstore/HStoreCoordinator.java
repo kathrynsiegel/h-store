@@ -700,7 +700,6 @@ public class HStoreCoordinator implements Shutdownable {
                           request.getClass().getSimpleName(),
                           HStoreThreadManager.formatSiteName(request.getSenderSite())));
             
-            LOG.info("coordinator will now execute at replica");
             ByteBuffer serializedRequest = request.getWork().asReadOnlyByteBuffer();
             TransactionForwardToReplicaResponseCallback callback = null;
             try {
