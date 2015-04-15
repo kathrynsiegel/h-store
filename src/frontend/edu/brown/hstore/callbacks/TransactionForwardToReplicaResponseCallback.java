@@ -23,7 +23,7 @@ import edu.brown.pools.Poolable;
  * results back to the client
  * @author ksiegel
  */
-public class TransactionForwardToReplicaResponseCallback<TransactionForwardToReplicaResponse> implements RpcCallback<ClientResponseImpl>, Poolable {
+public class TransactionForwardToReplicaResponseCallback implements RpcCallback<ClientResponseImpl>, Poolable {
     private static final Logger LOG = Logger.getLogger(TransactionForwardToReplicaResponseCallback.class);
     private static final LoggerBoolean debug = new LoggerBoolean();
     private static final LoggerBoolean trace = new LoggerBoolean();
@@ -76,11 +76,11 @@ public class TransactionForwardToReplicaResponseCallback<TransactionForwardToRep
             throw new RuntimeException(ex);
         }
         ByteString bs = ByteString.copyFrom(fs.getBuffer());
-//        TransactionForwardToReplicaResponse response = TransactionForwardToReplicaResponse.newBuilder()
-//                                                              .setSenderSite(this.sourceSiteId)
-//                                                              .setOutput(bs)
-//                                                              .build();
-//        this.orig_callback.run(response);
+        TransactionForwardToReplicaResponse response = TransactionForwardToReplicaResponse.newBuilder()
+                                                              .setSenderSite(this.sourceSiteId)
+                                                              .setOutput(bs)
+                                                              .build();
+        this.orig_callback.run(response);
         if (debug.val)
             LOG.debug(String.format("Sent back ClientResponse for txn #%d to %s [bytes=%d]",
                       parameter.getTransactionId(), HStoreThreadManager.formatSiteName(this.destSiteId),

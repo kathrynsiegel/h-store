@@ -699,14 +699,28 @@ public class HStoreCoordinator implements Shutdownable {
                 LOG.debug(String.format("Received %s from HStoreSite %s",
                           request.getClass().getSimpleName(),
                           HStoreThreadManager.formatSiteName(request.getSenderSite())));
-            TransactionForwardToReplicaResponse response = TransactionForwardToReplicaResponse.newBuilder()
-                                                    .setSenderSite(local_site_id).build();
+            
+            LOG.info("coordinator will now execute at replica");
+            ByteBuffer serializedRequest = request.getWork().asReadOnlyByteBuffer();
+            TransactionForwardToReplicaResponseCallback callback = null;
+            try {
+                callback = new TransactionForwardToReplicaResponseCallback(hstore_site);
+                callback.init(local_site_id, request.getSenderSite(), done);
+            } catch (Exception ex) {
+                String msg = "Failed to get " + TransactionRedirectResponseCallback.class.getSimpleName();
+                throw new RuntimeException(msg, ex);
+            }
+            
+            try {
+                hstore_site.invocationProcess(serializedRequest, callback);
+            } catch (Throwable ex) {
+                shutdownCluster(ex);
+            }
             
             
-            LOG.info("coordinator will now execute");
-            hstore_site.transactionStart(request.);
-            
-            done.run(response);
+//            TransactionForwardToReplicaResponse response = TransactionForwardToReplicaResponse.newBuilder()
+//                    .setSenderSite(local_site_id).build();
+//            done.run(response);
     	}
         
         @Override
