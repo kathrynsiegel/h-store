@@ -80,6 +80,7 @@ import org.voltdb.MemoryStats;
 import org.voltdb.ParameterSet;
 import org.voltdb.SQLStmt;
 import org.voltdb.SnapshotSiteProcessor;
+import org.voltdb.StoredProcedureInvocation;
 import org.voltdb.SnapshotSiteProcessor.SnapshotTableTask;
 import org.voltdb.SysProcSelector;
 import org.voltdb.VoltProcedure;
@@ -154,6 +155,7 @@ import edu.brown.hstore.callbacks.BlockingRpcCallback;
 import edu.brown.hstore.callbacks.LocalFinishCallback;
 import edu.brown.hstore.callbacks.LocalPrepareCallback;
 import edu.brown.hstore.callbacks.PartitionCountingCallback;
+import edu.brown.hstore.callbacks.RedirectCallback;
 import edu.brown.hstore.callbacks.RemotePrepareCallback;
 import edu.brown.hstore.callbacks.TransactionForwardToReplicaResponseCallback;
 import edu.brown.hstore.conf.HStoreConf;
@@ -2712,7 +2714,12 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         // homeboy here...
         
         // We know txn is ready to execute on primary, but we first need to send to replicas
-        if (this.hstore_site.getPartitionReplicas(ts.getBasePartition()) != null) { // TODO(katie) isprimary method
+        // -------------------------
+        // REPLICATE
+        // -------------------------
+        List<Integer> partitionReplicas = this.hstore_site.getPartitionReplicas(ts.getBasePartition());
+        if (partitionReplicas != null) {
+        	
 	        ForwardedTransaction replicaTransaction = new ForwardedTransaction(hstore_site);
 	        RpcCallback<TransactionForwardToReplicaResponse> replica_callback = new RpcCallback<TransactionForwardToReplicaResponse>() {
 	            @Override
@@ -2725,8 +2732,25 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 					ts.getClientHandle(), this.partitionId, ts.getPredictTouchedPartitions(), 
 					false, false, ts.getProcedure(), 
 					ts.getProcedureParameters(), null, replica_callback);
-	                                                                                                                 
-	        hstore_coordinator.transactionReplicate(replicaTransaction);
+			
+			Procedure catalog_proc = ts.getProcedure();
+            StoredProcedureInvocation spi = new StoredProcedureInvocation(ts.getClientHandle(),
+                                                                          catalog_proc.getId(),
+                                                                          catalog_proc.getName(),
+                                                                          ts.getProcedureParameters().toArray());
+            spi.setBasePartition(this.partitionId);
+            spi.setRestartCounter(ts.getRestartCounter()+1);
+                      
+            try {
+                this.fs.writeObject(spi);
+            } catch (IOException ex) {
+                String msg = "Failed to serialize StoredProcedureInvocation to forward txn to replica";
+                throw new ServerFaultException(msg, ex, ts.getTransactionId());
+            }
+            
+            byte[]serializedSpi = this.fs.getBytes();
+            
+            this.hstore_coordinator.transactionReplicate(serializedSpi, replica_callback, ts.getBasePartition());                                                                                 
         }
         
         if (hstore_conf.site.txn_profiling && ts.profiler != null) {

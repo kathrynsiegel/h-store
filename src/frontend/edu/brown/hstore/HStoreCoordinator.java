@@ -704,6 +704,7 @@ public class HStoreCoordinator implements Shutdownable {
             
             
             LOG.info("coordinator will now execute");
+            hstore_site.transactionStart(request.);
             
             done.run(response);
     	}
@@ -1462,11 +1463,11 @@ public class HStoreCoordinator implements Shutdownable {
     // ----------------------------------------------------------------------------
     // REPLICATION
     // ----------------------------------------------------------------------------
-    public void transactionReplicate(ForwardedTransaction replicaTransaction) {
-    	List<Integer> replica_sites = this.hstore_site.getPartitionReplicas(replicaTransaction.getBasePartition());
+    public void transactionReplicate(byte[] serializedRequest, RpcCallback<TransactionForwardToReplicaResponse> replica_callback, int partition) {
+    	List<Integer> replica_sites = this.hstore_site.getPartitionReplicas(partition);
     	ArrayList<Integer> replica_partitions = new ArrayList<Integer>();
     	for (int i = 0; i < replica_sites.size(); i++) { //todo(katie) extract into separate method
-    		replica_partitions.add(this.hstore_site.getCatalogContext().getSiteIdForPartitionId(replica_sites.get(i)));
+    		replica_partitions.add(catalogContext.getSiteIdForPartitionId(replica_sites.get(i)));
     	}
 		for (int j = 0; j < replica_sites.size(); j++) { 
 			if (replica_sites.get(j) == this.local_site_id) {
@@ -1474,12 +1475,11 @@ public class HStoreCoordinator implements Shutdownable {
 			}
 			if (this.isShuttingDown()) break;
 			try {
+				ByteString bs = ByteString.copyFrom(serializedRequest);
 				TransactionForwardToReplicaRequest request = TransactionForwardToReplicaRequest.newBuilder()
 		    			.setSenderSite(this.local_site_id)
-		    			.setTxnId(replicaTransaction.getTransactionId())
-		    			.setBasePartition(replicaTransaction.getBasePartition())
-		    			.setDestinationPartition(replica_partitions.get(j)).build();
-				this.channels[replica_sites.get(j)].transactionForwardToReplica(new ProtoRpcController(), request, replicaTransaction.getReplicaCallback());
+		    			.setWork(bs).build();
+				this.channels[replica_sites.get(j)].transactionForwardToReplica(new ProtoRpcController(), request, replica_callback);
 			} catch (RuntimeException ex) {
 				// Silently ignore these errors...
 			}

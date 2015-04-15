@@ -371,9 +371,8 @@ message TransactionRedirectResponse {
 
 message TransactionForwardToReplicaRequest {
     required int32 sender_site = 1;
-    required int64 txn_id = 2;
-    required int32 base_partition = 3;
-    required int32 destination_partition = 4;
+    required bytes work = 2;
+    optional int64 orig_txn_id = 3;
 }
 
 message TransactionForwardToReplicaResponse {
