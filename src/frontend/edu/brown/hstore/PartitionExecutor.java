@@ -2723,17 +2723,33 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 	        ForwardedTransaction replicaTransaction = new ForwardedTransaction(hstore_site);
 	        RpcCallback<TransactionForwardToReplicaResponse> replica_callback = new RpcCallback<TransactionForwardToReplicaResponse>() {
 	            private final int callbackID = (int)(Math.random()*Integer.MAX_VALUE);
+	            private int semaphore;
 	        	
 	        	@Override
 	            public void run(TransactionForwardToReplicaResponse response) {
 	                LOG.info("successfully reached replica callback for " + callbackID);
+	                semaphore -= 1;
+	                if (semaphore == 0) {
+	                	// TODO
+	                }
 	            }
-	        }; 
+	        	
+	        	public void setSemaphore(int num) {
+	        		this.semaphore = num;
+	        	}
+	        };
+//	        replica_callback.setSemaphore(partitionReplicas.size());
+	        
+	        // block?
+//	        BlockingRpcCallback<TransactionForwardToReplicaResponse> replica_callback = new BlockingRpcCallback<ForwardedTransaction, TransactionForwardToReplicaResponse>() {
+//	        	
+//	        
+//	        }
 	        					
-			replicaTransaction.init(ts.getTransactionId(), EstTime.currentTimeMillis(), 
-					ts.getClientHandle(), this.partitionId, ts.getPredictTouchedPartitions(), 
-					false, false, ts.getProcedure(), 
-					ts.getProcedureParameters(), null, replica_callback);
+//			replicaTransaction.init(ts.getTransactionId(), EstTime.currentTimeMillis(), 
+//					ts.getClientHandle(), this.partitionId, ts.getPredictTouchedPartitions(), 
+//					false, false, ts.getProcedure(), 
+//					ts.getProcedureParameters(), null, replica_callback);
 			
 			Procedure catalog_proc = ts.getProcedure();
             StoredProcedureInvocation spi = new StoredProcedureInvocation(ts.getClientHandle(),
