@@ -2717,39 +2717,11 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         // -------------------------
         // REPLICATE
         // -------------------------
-        List<Integer> partitionReplicas = this.hstore_site.getPartitionReplicas(ts.getBasePartition());
+        final List<Integer> partitionReplicas = this.hstore_site.getPartitionReplicas(ts.getBasePartition());
         if (partitionReplicas != null) {
         	
-	        ForwardedTransaction replicaTransaction = new ForwardedTransaction(hstore_site);
-	        RpcCallback<TransactionForwardToReplicaResponse> replica_callback = new RpcCallback<TransactionForwardToReplicaResponse>() {
-	            private final int callbackID = (int)(Math.random()*Integer.MAX_VALUE);
-	            private int semaphore;
-	        	
-	        	@Override
-	            public void run(TransactionForwardToReplicaResponse response) {
-	                LOG.info("successfully reached replica callback for " + callbackID);
-	                semaphore -= 1;
-	                if (semaphore == 0) {
-	                	// TODO
-	                }
-	            }
-	        	
-	        	public void setSemaphore(int num) {
-	        		this.semaphore = num;
-	        	}
-	        };
-//	        replica_callback.setSemaphore(partitionReplicas.size());
-	        
-	        // block?
-//	        BlockingRpcCallback<TransactionForwardToReplicaResponse> replica_callback = new BlockingRpcCallback<ForwardedTransaction, TransactionForwardToReplicaResponse>() {
-//	        	
-//	        
-//	        }
-	        					
-//			replicaTransaction.init(ts.getTransactionId(), EstTime.currentTimeMillis(), 
-//					ts.getClientHandle(), this.partitionId, ts.getPredictTouchedPartitions(), 
-//					false, false, ts.getProcedure(), 
-//					ts.getProcedureParameters(), null, replica_callback);
+        	TransactionForwardToReplicaResponseCallback replica_callback = new TransactionForwardToReplicaResponseCallback();
+	        replica_callback.init(partitionReplicas.size());
 			
 			Procedure catalog_proc = ts.getProcedure();
             StoredProcedureInvocation spi = new StoredProcedureInvocation(ts.getClientHandle(),
@@ -2768,7 +2740,8 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
             
             byte[]serializedSpi = this.fs.getBytes();
             
-            this.hstore_coordinator.transactionReplicate(serializedSpi, replica_callback, ts.getBasePartition());                                                                                 
+            this.hstore_coordinator.transactionReplicate(serializedSpi, replica_callback, ts.getBasePartition()); 
+            replica_callback.finish();
         }
         
         if (hstore_conf.site.txn_profiling && ts.profiler != null) {
