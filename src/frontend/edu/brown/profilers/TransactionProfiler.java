@@ -211,6 +211,7 @@ public class TransactionProfiler extends AbstractProfiler implements Poolable {
     
 
     public void startTransaction(long timestamp) {
+    	LOG.info("starting transaction");
         if (this.disabled)
             return;
         if (debug.val)
