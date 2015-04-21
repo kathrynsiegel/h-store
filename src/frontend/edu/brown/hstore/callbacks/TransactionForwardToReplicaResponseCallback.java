@@ -76,6 +76,7 @@ public class TransactionForwardToReplicaResponseCallback implements RpcCallback<
                                                               .setSenderSite(this.sourceSiteId)
                                                               .setOutput(bs)
                                                               .build();
+        LOG.debug("About to call response callback");
         this.orig_callback.run(response);
         if (debug.val)
             LOG.debug(String.format("Sent back ClientResponse for txn #%d to %s [bytes=%d]",
