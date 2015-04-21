@@ -157,6 +157,7 @@ import edu.brown.hstore.callbacks.LocalPrepareCallback;
 import edu.brown.hstore.callbacks.PartitionCountingCallback;
 import edu.brown.hstore.callbacks.RedirectCallback;
 import edu.brown.hstore.callbacks.RemotePrepareCallback;
+import edu.brown.hstore.callbacks.TransactionForwardToReplicaCallback;
 import edu.brown.hstore.callbacks.TransactionForwardToReplicaResponseCallback;
 import edu.brown.hstore.conf.HStoreConf;
 import edu.brown.hstore.estimators.Estimate;
@@ -2720,7 +2721,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         final List<Integer> partitionReplicas = this.hstore_site.getPartitionReplicas(ts.getBasePartition());
         if (partitionReplicas != null) {
         	
-        	TransactionForwardToReplicaResponseCallback replica_callback = new TransactionForwardToReplicaResponseCallback();
+        	TransactionForwardToReplicaCallback replica_callback = new TransactionForwardToReplicaCallback(hstore_site);
 	        replica_callback.init(partitionReplicas.size());
 			
 			Procedure catalog_proc = ts.getProcedure();
