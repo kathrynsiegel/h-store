@@ -35,11 +35,14 @@ public class TransactionForwardToReplicaCallback implements RpcCallback<Transact
      */
     public TransactionForwardToReplicaCallback(int numDestinationSites) {
     	this.numDestinationSites = numDestinationSites;
+    	LOG.debug("Creating TransactionForwardToReplicaCallback");
         this.permits = new Semaphore(this.numDestinationSites, true);
         try {
 			this.permits.acquire(this.numDestinationSites);
+			LOG.debug("Initialized");
 		} catch (InterruptedException e) {
 			// ignore silently
+			LOG.debug("uh oh error");
 		}
     }
     
@@ -47,6 +50,7 @@ public class TransactionForwardToReplicaCallback implements RpcCallback<Transact
     public void run(TransactionForwardToReplicaResponse parameter) {
         if (debug.val)
             LOG.debug(String.format("Reached forwarded callback"));
+        LOG.debug(String.format("Reached forwarded callback"));
         this.permits.release();
     }
     
@@ -54,6 +58,7 @@ public class TransactionForwardToReplicaCallback implements RpcCallback<Transact
     	try {
 			this.permits.acquire(this.numDestinationSites);
 		} catch (InterruptedException e) {
+			LOG.debug("uh oh error 2");
 			// silently ignore
 		}
     	// all done! (this is probably a bad way to do this)
