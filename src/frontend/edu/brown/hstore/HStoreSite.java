@@ -1799,6 +1799,7 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
                                         catalog_proc,
                                         procParams,
                                         clientCallback);
+        LOG.info(String.format("Sending new transaction to transaction queue."));
         this.transactionQueue(ts);
         if (trace.val)
             LOG.trace(String.format("Finished initial processing of new txn."));
@@ -1970,6 +1971,7 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
      * @param ts
      */
     public void transactionInit(AbstractTransaction ts) {
+    	LOG.info("initialized transaction");
         assert(ts.isInitialized()) : "Uninitialized transaction handle [" + ts + "]";
         this.txnQueueManager.queueTransactionInit(ts);
     }

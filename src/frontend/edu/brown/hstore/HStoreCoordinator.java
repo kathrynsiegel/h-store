@@ -702,7 +702,6 @@ public class HStoreCoordinator implements Shutdownable {
             
             ByteBuffer serializedRequest = request.getWork().asReadOnlyByteBuffer();
             TransactionForwardToReplicaResponseCallback callback = null;
-            LOG.info("initializing callback...");
             try {
                 callback = new TransactionForwardToReplicaResponseCallback(hstore_site);
                 callback.init(local_site_id, request.getSenderSite(), done);
@@ -710,7 +709,6 @@ public class HStoreCoordinator implements Shutdownable {
                 String msg = "Failed to get " + TransactionRedirectResponseCallback.class.getSimpleName();
                 throw new RuntimeException(msg, ex);
             }
-            LOG.info("About to send forwarded transaction");
             try {
                 hstore_site.invocationProcess(serializedRequest, callback);
             } catch (Throwable ex) {

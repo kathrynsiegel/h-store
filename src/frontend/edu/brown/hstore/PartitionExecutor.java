@@ -2720,9 +2720,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         // -------------------------
         final List<Integer> partitionReplicas = this.hstore_site.getPartitionReplicas(ts.getBasePartition());
         if (partitionReplicas != null) {
-        	LOG.info(String.format("got here at least"));
         	TransactionForwardToReplicaCallback replica_callback = new TransactionForwardToReplicaCallback(partitionReplicas.size());
-			LOG.info("About to initialize other spi stuff");
 			Procedure catalog_proc = ts.getProcedure();
             StoredProcedureInvocation spi = new StoredProcedureInvocation(ts.getClientHandle(),
                                                                           catalog_proc.getId(),
@@ -2743,6 +2741,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
             this.hstore_coordinator.transactionReplicate(serializedSpi, replica_callback, ts.getBasePartition()); 
             LOG.info("Waiting for finished callback");
             replica_callback.waitForFinish();
+            LOG.info("Finished!");
         }
         
         if (hstore_conf.site.txn_profiling && ts.profiler != null) {
