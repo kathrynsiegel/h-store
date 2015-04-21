@@ -19,7 +19,7 @@ import edu.brown.pools.Poolable;
  * results back to the client
  * @author pavlo
  */
-public class TransactionForwardToReplicaCallback implements RpcCallback<TransactionForwardToReplicaResponse>, Poolable {
+public class TransactionForwardToReplicaCallback implements RpcCallback<TransactionForwardToReplicaResponse> {
     private static final Logger LOG = Logger.getLogger(TransactionRedirectResponseCallback.class);
     private static final LoggerBoolean debug = new LoggerBoolean();
     private static final LoggerBoolean trace = new LoggerBoolean();
@@ -27,18 +27,13 @@ public class TransactionForwardToReplicaCallback implements RpcCallback<Transact
         LoggerUtil.attachObserver(LOG, debug, trace);
     }
     
-    private HStoreSite hstore_site;
     private int numDestinationSites;
     private Semaphore permits;
 
     /**
      * Default Constructor
      */
-    public TransactionForwardToReplicaCallback(HStoreSite hstore_site) {
-    	this.hstore_site = hstore_site;
-    }
-    
-    public void init(int numDestinationSites) {
+    public TransactionForwardToReplicaCallback(int numDestinationSites) {
     	this.numDestinationSites = numDestinationSites;
         this.permits = new Semaphore(this.numDestinationSites, true);
         try {
@@ -46,17 +41,6 @@ public class TransactionForwardToReplicaCallback implements RpcCallback<Transact
 		} catch (InterruptedException e) {
 			// ignore silently
 		}
-    }
-
-    @Override
-    public boolean isInitialized() {
-        return (this.permits != null);
-    }
-    
-    @Override
-    public void finish() {
-        this.permits = null;
-        this.numDestinationSites = -1;
     }
     
     @Override
