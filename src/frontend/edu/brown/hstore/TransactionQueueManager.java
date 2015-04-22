@@ -380,7 +380,6 @@ public class TransactionQueueManager extends ExceptionHandlingRunnable implement
     protected void queueTransactionInit(AbstractTransaction ts) {
         if (debug.val)
             LOG.debug(String.format("Adding %s to initialization queue", ts));
-        LOG.info(String.format("Adding %s to initialization queue", ts));
         if (hstore_conf.site.txn_profiling && ts instanceof LocalTransaction) {
             LocalTransaction localTxn = (LocalTransaction)ts;
             if (localTxn.profiler != null) localTxn.profiler.startInitQueue();

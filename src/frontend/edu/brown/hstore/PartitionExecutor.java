@@ -3185,7 +3185,6 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
             }
             WorkResult response = this.buildWorkResult((RemoteTransaction) ts, result, status, error);
             assert (response != null);
-            LOG.info("running callback response");
             callback.run(response);
         }
 

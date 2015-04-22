@@ -1,6 +1,7 @@
 package edu.brown.hstore.callbacks;
 
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
@@ -55,11 +56,16 @@ public class TransactionForwardToReplicaCallback implements RpcCallback<Transact
     public void waitForFinish() {
     	LOG.info(String.format("current number of permits available: %s",this.permits.availablePermits()));
     	try {
-			this.permits.acquire(this.numDestinationSites);
+			this.permits.tryAcquire(this.numDestinationSites, 10, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
 			LOG.info("uh oh error 2");
-			// silently ignore
 		}
+//    	try {
+//			this.permits.acquire(this.numDestinationSites);
+//		} catch (InterruptedException e) {
+//			LOG.info("uh oh error 2");
+//			// silently ignore
+//		}
     	// all done! (this is probably a bad way to do this)
     	this.permits.release(this.numDestinationSites);
     }
