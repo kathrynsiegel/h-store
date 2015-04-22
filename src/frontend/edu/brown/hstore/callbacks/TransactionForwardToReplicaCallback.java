@@ -34,16 +34,18 @@ public class TransactionForwardToReplicaCallback implements RpcCallback<Transact
      * Default Constructor
      */
     public TransactionForwardToReplicaCallback(int numDestinationSites) {
+    	int ID = (int)(Math.random() * Integer.MAX_VALUE);
     	this.numDestinationSites = numDestinationSites;
-    	LOG.info("Creating TransactionForwardToReplicaCallback");
-//        this.permits = new Semaphore(this.numDestinationSites, true);
-//        try {
-//			this.permits.acquire(this.numDestinationSites);
-//			LOG.info("Initialized");
-//		} catch (InterruptedException e) {
-//			// ignore silently
-//			LOG.info("uh oh error");
-//		}
+    	LOG.info(String.format("Creating TransactionForwardToReplicaCallback %i",ID));
+        this.permits = new Semaphore(this.numDestinationSites, true);
+        LOG.info(String.format("Created TransactionForwardToReplicaCallback permits %i",ID));
+        try {
+			this.permits.acquire(this.numDestinationSites);
+			LOG.info(String.format("Initialized permits %i",ID));
+		} catch (InterruptedException e) {
+			// ignore silently
+			LOG.info("uh oh error");
+		}
     }
     
     @Override
@@ -51,7 +53,7 @@ public class TransactionForwardToReplicaCallback implements RpcCallback<Transact
         if (debug.val)
             LOG.debug(String.format("Reached forwarded callback"));
         LOG.debug(String.format("Reached forwarded callback"));
-//        this.permits.release();
+        this.permits.release();
     }
     
     public void waitForFinish() {
