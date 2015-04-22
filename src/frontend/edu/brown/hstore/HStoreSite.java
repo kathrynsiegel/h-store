@@ -2722,6 +2722,7 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
         if (catalog_proc != null) this.rtStats.addResponseTime(catalog_proc, now - initiateTime); // Marco
         cresponse.setRestartCounter(restartCounter);
         try {
+        	LOG.info(String.format("sending client callback %s", clientCallback.toString()));
             clientCallback.run(cresponse);
         } catch (ClientConnectionLostException ex) {
             // There is nothing else we can really do here. We'll clean up

@@ -49,6 +49,7 @@ public class TransactionForwardToReplicaResponseCallback implements RpcCallback<
         this.orig_callback = orig_callback;
         this.sourceSiteId = source_id;
         this.destSiteId = dest_id;
+        LOG.info(String.format("initializing callback %s",this.toString()));
     }
 
     @Override
