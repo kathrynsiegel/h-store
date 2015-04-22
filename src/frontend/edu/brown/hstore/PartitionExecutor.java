@@ -2742,8 +2742,8 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
             byte[]serializedSpi = this.fs.getBytes();
             
             this.hstore_coordinator.transactionReplicate(serializedSpi, replica_callback, ts.getBasePartition()); 
-            LOG.info("Waiting for finished callback");
-//            replica_callback.waitForFinish();
+            LOG.info(String.format("Waiting for finished callback %s",replica_callback.toString()));
+            replica_callback.waitForFinish();
             LOG.info("Finished!");
         }
         
