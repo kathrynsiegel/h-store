@@ -1172,7 +1172,6 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 
                 // Check if we have anything to do right now
                 if (nextWork == null) {
-                	LOG.info("null nextWork");
                     if (hstore_conf.site.exec_profiling)
                         profiler.idle_time.start();
                     try {
