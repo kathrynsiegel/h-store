@@ -56,7 +56,12 @@ public class TransactionForwardToReplicaCallback implements RpcCallback<Transact
     public void waitForFinish() {
     	LOG.info(String.format("current number of permits available: %s",this.permits.availablePermits()));
     	try {
-			this.permits.tryAcquire(this.numDestinationSites, 10, TimeUnit.SECONDS);
+			boolean acquired = this.permits.tryAcquire(this.numDestinationSites, 5, TimeUnit.SECONDS);
+			if (acquired) {
+				LOG.info("successfully acquired while waiting for finish");
+			} else {
+				LOG.info("reached timeout when waiting for finish");
+			}
 		} catch (InterruptedException e) {
 			LOG.info("uh oh error 2");
 		}
@@ -66,6 +71,7 @@ public class TransactionForwardToReplicaCallback implements RpcCallback<Transact
 //			LOG.info("uh oh error 2");
 //			// silently ignore
 //		}
+    	
     	// all done! (this is probably a bad way to do this)
     	this.permits.release(this.numDestinationSites);
     }
