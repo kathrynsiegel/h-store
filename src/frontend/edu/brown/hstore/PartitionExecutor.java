@@ -1137,6 +1137,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
                     // If we get something back here, then it should become our
                     // current transaction.
                     if (nextTxn != null) {
+                    	LOG.info("found next transaction");
                         // If this a single-partition txn, then we'll want to
                         // execute it right away
                         if (nextTxn.isPredictSinglePartition()) {
@@ -1171,6 +1172,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 
                 // Check if we have anything to do right now
                 if (nextWork == null) {
+                	LOG.info("null nextWork");
                     if (hstore_conf.site.exec_profiling)
                         profiler.idle_time.start();
                     try {
@@ -1213,6 +1215,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
                         // EVERYTHING ELSE
                         // -------------------------------
                         else {
+                        	LOG.info("do some work here");
                             this.processInternalMessage(nextWork);
                         }
                     } finally {
@@ -2740,7 +2743,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
             
             this.hstore_coordinator.transactionReplicate(serializedSpi, replica_callback, ts.getBasePartition()); 
             LOG.info("Waiting for finished callback");
-            replica_callback.waitForFinish();
+//            replica_callback.waitForFinish();
             LOG.info("Finished!");
         }
         
@@ -3181,6 +3184,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
             }
             WorkResult response = this.buildWorkResult((RemoteTransaction) ts, result, status, error);
             assert (response != null);
+            LOG.info("running callback response");
             callback.run(response);
         }
 
