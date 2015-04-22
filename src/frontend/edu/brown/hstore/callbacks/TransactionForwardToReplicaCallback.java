@@ -53,6 +53,7 @@ public class TransactionForwardToReplicaCallback implements RpcCallback<Transact
     }
     
     public void waitForFinish() {
+    	LOG.info(String.format("current number of permits available: %s",this.permits.availablePermits()));
     	try {
 			this.permits.acquire(this.numDestinationSites);
 		} catch (InterruptedException e) {
