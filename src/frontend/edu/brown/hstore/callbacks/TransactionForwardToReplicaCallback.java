@@ -47,8 +47,9 @@ public class TransactionForwardToReplicaCallback implements RpcCallback<Transact
     public void run(TransactionForwardToReplicaResponse parameter) {
         if (debug.val)
             LOG.debug(String.format("Reached forwarded callback"));
-        LOG.info(String.format("Reached forwarded callback"));
+        LOG.info(String.format("Reached forwarded callback %s with %s permits", this.toString(),this.permits.availablePermits()));
         this.permits.release();
+        LOG.info(String.format("now there are %s permits for %s", this.permits.availablePermits(), this.toString()));
     }
     
     public void waitForFinish() {
