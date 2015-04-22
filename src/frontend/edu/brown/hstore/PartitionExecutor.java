@@ -2722,6 +2722,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         // -------------------------
         final List<Integer> partitionReplicas = this.hstore_site.getPartitionReplicas(ts.getBasePartition());
         if (partitionReplicas != null) {
+        	LOG.info(String.format("replicating from partition %s", ts.getBasePartition()));
         	TransactionForwardToReplicaCallback replica_callback = new TransactionForwardToReplicaCallback(partitionReplicas.size());
 			Procedure catalog_proc = ts.getProcedure();
             StoredProcedureInvocation spi = new StoredProcedureInvocation(ts.getClientHandle(),
@@ -2825,6 +2826,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         // are successful
         // Therefore we don't want to grab the exec_mode lock here.
         if (predict_singlePartition == false || this.canProcessClientResponseNow(ts, status, before_mode)) {
+        	LOG.info("successful transaction!!");
             this.processClientResponse(ts, cresponse);
         }
         // Otherwise always queue our response, since we know that whatever
@@ -5412,6 +5414,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
      * @param cresponse
      */
     protected void processClientResponse(LocalTransaction ts, ClientResponseImpl cresponse) {
+    	LOG.info(String.format("processing client response %s",ts.toString()));
         // IMPORTANT: If we executed this locally and only touched our
         // partition, then we need to commit/abort right here
         // 2010-11-14: The reason why we can do this is because we will just
@@ -6037,6 +6040,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
                         try {
                             if (trace.val)
                                 LOG.trace(String.format("%s - Releasing blocked ClientResponse for %s [status=%s]", ts, spec_ts, spec_cr.getStatus()));
+                            LOG.info("finished distributed transaction");
                             this.processClientResponse(spec_ts, spec_cr);
                         } catch (Throwable ex) {
                             String msg = "Failed to complete queued response for " + spec_ts;
@@ -6170,6 +6174,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
                 LOG.debug(String.format("%s - Releasing blocked ClientResponse for %s [status=%s]",
                           ts, ts, ts.getClientResponse().getStatus()));
             try {
+            	LOG.info(String.format("processing client response batch including %s",ts.toString()));
                 this.processClientResponse(ts, ts.getClientResponse());
             } catch (Throwable ex) {
                 String msg = "Failed to complete queued response for " + ts;

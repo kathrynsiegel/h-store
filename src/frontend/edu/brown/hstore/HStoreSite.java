@@ -2565,6 +2565,7 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
      * @param cresponse
      */
     public void responseSend(LocalTransaction ts, ClientResponseImpl cresponse) {
+    	LOG.info(String.format("about to send transaction response %s",ts.toString()));
         Status status = cresponse.getStatus();
         assert(cresponse != null) :
             "Missing ClientResponse for " + ts;
@@ -2691,6 +2692,7 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
                              int restartCounter
                              ,Procedure catalog_proc // Marco
                              ) {
+    	LOG.info(String.format("sending response for transaction"));
         Status status = cresponse.getStatus();
  
         // If the txn committed/aborted, then we can send the response directly back to the

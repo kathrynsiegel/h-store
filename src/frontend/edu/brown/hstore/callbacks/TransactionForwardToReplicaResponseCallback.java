@@ -65,6 +65,7 @@ public class TransactionForwardToReplicaResponseCallback implements RpcCallback<
     
     @Override
     public void run(ClientResponseImpl parameter) {
+    	LOG.info("About to call response callback");
         FastSerializer fs = new FastSerializer();
         try {
             parameter.writeExternal(fs);
@@ -76,7 +77,6 @@ public class TransactionForwardToReplicaResponseCallback implements RpcCallback<
                                                               .setSenderSite(this.sourceSiteId)
                                                               .setOutput(bs)
                                                               .build();
-        LOG.info("About to call response callback");
         this.orig_callback.run(response);
         if (debug.val)
             LOG.debug(String.format("Sent back ClientResponse for txn #%d to %s [bytes=%d]",
