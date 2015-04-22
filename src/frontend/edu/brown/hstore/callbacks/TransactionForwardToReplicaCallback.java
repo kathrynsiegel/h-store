@@ -36,12 +36,14 @@ public class TransactionForwardToReplicaCallback implements RpcCallback<Transact
      */
     public TransactionForwardToReplicaCallback(int numDestinationSites) {
     	this.numDestinationSites = numDestinationSites;
+    	LOG.info(String.format("initializing callback %s with %s permits",this.toString(), this.numDestinationSites));
         this.permits = new Semaphore(this.numDestinationSites, true);
         try {
 			this.permits.acquire(this.numDestinationSites);
 		} catch (InterruptedException e) {
 			// ignore silently
 		}
+        LOG.info(String.format("callback %s now has %s permits available", this.toString(),this.permits.availablePermits()));
     }
     
     @Override
