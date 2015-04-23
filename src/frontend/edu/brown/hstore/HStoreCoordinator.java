@@ -730,7 +730,7 @@ public class HStoreCoordinator implements Shutdownable {
 		public void transactionReplicateFinish(RpcController controller, TransactionReplicateFinishRequest request, 
 				RpcCallback<TransactionReplicateFinishResponse> done) {
 			LOG.info("finished transaction replication and reached callback on primary");
-			LOG.info(String.format("permits: %s", HStoreCoordinator.this.transactionReplicatePermits.toString()));
+			LOG.info(String.format("permits for site %s: %s", HStoreCoordinator.this.getLocalSiteId(), HStoreCoordinator.this.transactionReplicatePermits.toString()));
 			HStoreCoordinator.this.transactionReplicatePermits.get(request.getTxnId()).release();
 			LOG.info("released semaphore");
 		}
@@ -1517,6 +1517,7 @@ public class HStoreCoordinator implements Shutdownable {
      */
     public void addTransactionReplicatePermit(Long txn_id, Semaphore permit) {
     	this.transactionReplicatePermits.put(txn_id, permit);
+    	LOG.info(String.format("added permit on site %s for txn %s", this.local_site_id, txn_id));
     }
     
     /**
