@@ -1539,7 +1539,7 @@ public class HStoreCoordinator implements Shutdownable {
      * @param txn_id
      */
     public void transactionReplicateFinish(Long txn_id, int partition) {
-    	LOG.info(String.format("sending transaction finish for %s from site %s", txn_id, this.local_site_id));
+    	LOG.info(String.format("sending transaction finish for %s from site %s to site %s", txn_id, this.local_site_id, catalogContext.getSiteIdForPartitionId(partition)));
     	TransactionReplicateFinishRequest request = TransactionReplicateFinishRequest.newBuilder().setTxnId(txn_id).build();
     	this.channels[catalogContext.getSiteIdForPartitionId(partition)].transactionReplicateFinish(new ProtoRpcController(), request, null);
     }
