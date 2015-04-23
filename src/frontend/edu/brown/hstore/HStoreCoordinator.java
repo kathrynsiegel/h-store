@@ -82,6 +82,8 @@ import edu.brown.hstore.Hstoreservice.TransactionRedirectRequest;
 import edu.brown.hstore.Hstoreservice.TransactionRedirectResponse;
 import edu.brown.hstore.Hstoreservice.TransactionReduceRequest;
 import edu.brown.hstore.Hstoreservice.TransactionReduceResponse;
+import edu.brown.hstore.Hstoreservice.TransactionReplicateFinishRequest;
+import edu.brown.hstore.Hstoreservice.TransactionReplicateFinishResponse;
 import edu.brown.hstore.Hstoreservice.TransactionWorkRequest;
 import edu.brown.hstore.Hstoreservice.TransactionWorkResponse;
 import edu.brown.hstore.Hstoreservice.WorkFragment;
@@ -725,6 +727,14 @@ public class HStoreCoordinator implements Shutdownable {
     	}
         
         @Override
+		public void transactionReplicateFinish(RpcController controller, TransactionReplicateFinishRequest request, 
+				RpcCallback<TransactionReplicateFinishResponse> done) {
+			LOG.info("finished transaction replication and reached callback on primary");
+			HStoreCoordinator.this.transactionReplicatePermits.get(request.getTxnId()).release();
+			LOG.info("released semaphore");
+		}
+        
+        @Override
         public void sendData(RpcController controller, SendDataRequest request, RpcCallback<SendDataResponse> done) {
             // Take the SendDataRequest and pass it to the sendData_handler, which
             // will deserialize the embedded VoltTable and wrap it in something that we can
@@ -993,9 +1003,6 @@ public class HStoreCoordinator implements Shutdownable {
         	}
           
         }
-        
-
-
     } // END CLASS
     
     
@@ -1481,7 +1488,7 @@ public class HStoreCoordinator implements Shutdownable {
     public void transactionReplicate(byte[] serializedRequest, RpcCallback<TransactionForwardToReplicaResponse> replica_callback, int partition) {
     	List<Integer> replica_sites = this.hstore_site.getPartitionReplicas(partition);
     	ArrayList<Integer> replica_partitions = new ArrayList<Integer>();
-    	for (int i = 0; i < replica_sites.size(); i++) { //todo(katie) extract into separate method
+    	for (int i = 0; i < replica_sites.size(); i++) {
     		replica_partitions.add(catalogContext.getSiteIdForPartitionId(replica_sites.get(i)));
     	}
 		for (int j = 0; j < replica_sites.size(); j++) { 
@@ -1526,9 +1533,9 @@ public class HStoreCoordinator implements Shutdownable {
      * from a different site
      * @param txn_id
      */
-    public void decrementTransactionReplicatePermit(Long txn_id, int partition) {
-    	HStoreService channel = this.channels[catalogContext.getSiteIdForPartitionId(partition)];
-//    	this.transactionReplicatePermits.get(txn_id).release(); TODO(KATIE)
+    public void transactionReplicateFinish(Long txn_id, int partition) {
+    	TransactionReplicateFinishRequest request = TransactionReplicateFinishRequest.newBuilder().setTxnId(txn_id).build();
+    	this.channels[catalogContext.getSiteIdForPartitionId(partition)].transactionReplicateFinish(new ProtoRpcController(), request, null);
     }
     
     

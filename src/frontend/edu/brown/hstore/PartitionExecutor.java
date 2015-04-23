@@ -5505,6 +5505,22 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
             if (ts.isMarkedFinished(this.partitionId) == false) {
                 this.finishTransaction(ts, status);
             }
+            
+            // if a replicated transaction, then send acknowledgement
+            // that replication has succeeded
+            LOG.info(String.format("Checking if partition %s is a replica", this.partitionId));
+            if (this.hstore_site.getPartitionReplicas(this.partitionId) == null) {
+            	LOG.info("acknowledging the finished replication");
+            	Map<Integer, List<Integer>> partitionReplicas = this.hstore_site.getPartitionReplicasMap();
+            	Iterator<Entry<Integer, List<Integer>>> it = partitionReplicas.entrySet().iterator();
+                while (it.hasNext()) {
+                	Entry<Integer, List<Integer>> entry = it.next();
+                    if (entry.getValue().contains(this.partitionId)) {
+                    	LOG.info("sending finished replication callback");
+                    	this.hstore_coordinator.transactionReplicateFinish(ts.getTransactionId(), entry.getKey());
+                    }
+                }
+            }
 
             // We have to mark it as loggable to prevent the response
             // from getting sent back to the client
@@ -5522,33 +5538,34 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         // COMMIT: Distributed Transaction
         // -------------------------------
         else if (status == Status.OK) {
+        	throw new NotImplementedException("ERROR: replication not supported for distributed transactions");
             // We need to set the new ExecutionMode before we invoke
             // transactionPrepare
             // because the LocalTransaction handle might get cleaned up
             // immediately
-            ExecutionMode newMode = null;
-            if (hstore_conf.site.specexec_enable) {
-                newMode = (ts.isExecReadOnly(this.partitionId) ? ExecutionMode.COMMIT_READONLY : ExecutionMode.COMMIT_NONE);
-            } else {
-                newMode = ExecutionMode.DISABLED;
-            }
-            this.setExecutionMode(ts, newMode);
-
-            if (hstore_conf.site.txn_profiling && ts.profiler != null) ts.profiler.startPostPrepare();
-            if (hstore_conf.site.exec_profiling) {
-                this.profiler.network_time.start();
-                this.profiler.sp3_local_time.start();
-            }
-            
-            // We will send a prepare message to all of our remote HStoreSites
-            // The coordinator needs to be smart enough to know whether a txn 
-            // has already been marked as prepared at a partition (i.e., it's gotten
-            // responses).
-            PartitionSet partitions = ts.getPredictTouchedPartitions();
-            LocalPrepareCallback callback = ts.getPrepareCallback();
-            this.hstore_coordinator.transactionPrepare(ts, callback, partitions);
-            if (hstore_conf.site.exec_profiling) this.profiler.network_time.stopIfStarted();
-            ts.getDonePartitions().addAll(partitions);
+//            ExecutionMode newMode = null;
+//            if (hstore_conf.site.specexec_enable) {
+//                newMode = (ts.isExecReadOnly(this.partitionId) ? ExecutionMode.COMMIT_READONLY : ExecutionMode.COMMIT_NONE);
+//            } else {
+//                newMode = ExecutionMode.DISABLED;
+//            }
+//            this.setExecutionMode(ts, newMode);
+//
+//            if (hstore_conf.site.txn_profiling && ts.profiler != null) ts.profiler.startPostPrepare();
+//            if (hstore_conf.site.exec_profiling) {
+//                this.profiler.network_time.start();
+//                this.profiler.sp3_local_time.start();
+//            }
+//            
+//            // We will send a prepare message to all of our remote HStoreSites
+//            // The coordinator needs to be smart enough to know whether a txn 
+//            // has already been marked as prepared at a partition (i.e., it's gotten
+//            // responses).
+//            PartitionSet partitions = ts.getPredictTouchedPartitions();
+//            LocalPrepareCallback callback = ts.getPrepareCallback();
+//            this.hstore_coordinator.transactionPrepare(ts, callback, partitions);
+//            if (hstore_conf.site.exec_profiling) this.profiler.network_time.stopIfStarted();
+//            ts.getDonePartitions().addAll(partitions);
         }
         // -------------------------------
         // ABORT: Distributed Transaction

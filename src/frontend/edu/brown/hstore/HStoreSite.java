@@ -1102,6 +1102,10 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
     	assert(this.partitionReplicas != null);
     	return this.partitionReplicas.get(partition);
     }
+    public Map<Integer, List<Integer>> getPartitionReplicasMap() {
+    	assert(this.partitionReplicas != null);
+    	return this.partitionReplicas;
+    }
     /**
      * Returns true if the given PartitionSite contains partitions that are
      * all managed by this HStoreSite.
