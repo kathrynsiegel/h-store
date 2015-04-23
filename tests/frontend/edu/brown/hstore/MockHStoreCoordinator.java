@@ -48,6 +48,8 @@ import edu.brown.hstore.Hstoreservice.TransactionRedirectRequest;
 import edu.brown.hstore.Hstoreservice.TransactionRedirectResponse;
 import edu.brown.hstore.Hstoreservice.TransactionReduceRequest;
 import edu.brown.hstore.Hstoreservice.TransactionReduceResponse;
+import edu.brown.hstore.Hstoreservice.TransactionReplicateFinishRequest;
+import edu.brown.hstore.Hstoreservice.TransactionReplicateFinishResponse;
 import edu.brown.hstore.Hstoreservice.TransactionWorkRequest;
 import edu.brown.hstore.Hstoreservice.TransactionWorkResponse;
 import edu.brown.hstore.conf.HStoreConf;
@@ -266,6 +268,14 @@ public class MockHStoreCoordinator extends HStoreCoordinator {
 		public void transactionForwardToReplica(RpcController controller,
 				TransactionForwardToReplicaRequest request,
 				RpcCallback<TransactionForwardToReplicaResponse> done) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void transactionReplicateFinish(RpcController controller,
+				TransactionReplicateFinishRequest request,
+				RpcCallback<TransactionReplicateFinishResponse> done) {
 			// TODO Auto-generated method stub
 			
 		}
