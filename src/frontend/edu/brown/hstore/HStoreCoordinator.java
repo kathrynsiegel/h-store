@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.NotImplementedException;
@@ -196,6 +197,12 @@ public class HStoreCoordinator implements Shutdownable {
     
     private final TransactionPrefetchCallback transactionPrefetch_callback;
     private final PrefetchQueryPlanner prefetchPlanner;
+    
+    // ----------------------------------------------------------------------------
+    // REPLICA FORWARDING
+    // ----------------------------------------------------------------------------
+    
+    private HashMap<Long, Semaphore> transactionReplicatePermits = new HashMap<Long, Semaphore>();
     
     // ----------------------------------------------------------------------------
     // MESSENGER LISTENER THREAD
@@ -1493,6 +1500,37 @@ public class HStoreCoordinator implements Shutdownable {
 			}
 		} // FOR
     };
+    
+    /**
+     * Called by the primary partition when adding a Semaphore for a transaction
+     * that must be replicated onto the primary partition's replicas
+     * @param txn_id
+     * @param permit
+     */
+    public void addTransactionReplicatePermit(Long txn_id, Semaphore permit) {
+    	this.transactionReplicatePermits.put(txn_id, permit);
+    }
+    
+    /**
+     * Called by the primary partition after it has verified that the transaction
+     * has been replicated onto all necessary replicas. This is just a cleanup
+     * method to remove unnecessary replication semaphores.
+     * @param txn_id
+     */
+    public void removeTransactionReplicatePermit(Long txn_id) {
+    	this.transactionReplicatePermits.remove(txn_id);
+    }
+    
+    /**
+     * This is called by the replica partition when decrementing the semaphore remotely,
+     * from a different site
+     * @param txn_id
+     */
+    public void decrementTransactionReplicatePermit(Long txn_id, int partition) {
+    	HStoreService channel = this.channels[catalogContext.getSiteIdForPartitionId(partition)];
+//    	this.transactionReplicatePermits.get(txn_id).release(); TODO(KATIE)
+    }
+    
     
     // ----------------------------------------------------------------------------
     // TIME SYNCHRONZIATION

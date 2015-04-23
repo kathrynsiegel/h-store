@@ -2741,9 +2741,27 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
             
             byte[]serializedSpi = this.fs.getBytes();
             
+            // semaphore
+            int numReplicas = partitionReplicas.size();
+            Semaphore transactionReplicatePermit = new Semaphore(numReplicas, true);
+            try {
+				transactionReplicatePermit.acquire(numReplicas);
+			} catch (InterruptedException e) {
+				// silently ignore
+			}
+            this.hstore_coordinator.addTransactionReplicatePermit(ts.getTransactionId(), transactionReplicatePermit);
+            
             this.hstore_coordinator.transactionReplicate(serializedSpi, replica_callback, ts.getBasePartition()); 
             LOG.info(String.format("Waiting for finished callback %s",replica_callback.toString()));
-            replica_callback.waitForFinish();
+            
+            // block until semaphore is released
+            try {
+				transactionReplicatePermit.acquire(numReplicas);
+			} catch (InterruptedException e) {
+				// silently ignore again
+			}
+            transactionReplicatePermit.release(numReplicas);
+            this.hstore_coordinator.removeTransactionReplicatePermit(ts.getTransactionId());
             LOG.info("Finished!");
         }
         

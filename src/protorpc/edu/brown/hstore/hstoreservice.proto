@@ -380,6 +380,14 @@ message TransactionForwardToReplicaResponse {
     required bytes output = 2;
 }
 
+message TransactionReplicateFinishRequest {
+    required int64 txn_id = 1;
+}
+
+message TransactionReplicateFinishResponse {
+	required int64 txn_id = 1;
+}
+
 // -----------------------------------
 // TRANSACTION DEBUG MESSAGE
 // -----------------------------------
@@ -787,6 +795,7 @@ service HStoreService {
     rpc TransactionFinish(TransactionFinishRequest) returns (TransactionFinishResponse);
     rpc TransactionRedirect(TransactionRedirectRequest) returns (TransactionRedirectResponse);
     rpc TransactionForwardToReplica(TransactionForwardToReplicaRequest) returns (TransactionForwardToReplicaResponse);
+    rpc TransactionReplicateFinish(TransactionReplicateFinishRequest) returns (TransactionReplicateFinishResponse);
     rpc TransactionDebug(TransactionDebugRequest) returns (TransactionDebugResponse);
     rpc SendData(SendDataRequest) returns (SendDataResponse);
     rpc Initialize(InitializeRequest) returns (InitializeResponse);

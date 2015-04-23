@@ -29,44 +29,44 @@ public class TransactionForwardToReplicaCallback implements RpcCallback<Transact
     }
     
     private int numDestinationSites;
-    private Semaphore permits;
+//    private Semaphore permits;
 
     /**
      * Default Constructor
      */
     public TransactionForwardToReplicaCallback(int numDestinationSites) {
-    	this.numDestinationSites = numDestinationSites;
-    	LOG.info(String.format("initializing callback %s with %s permits",this.toString(), this.numDestinationSites));
-        this.permits = new Semaphore(this.numDestinationSites, true);
-        try {
-			this.permits.acquire(this.numDestinationSites);
-		} catch (InterruptedException e) {
-			// ignore silently
-		}
-        LOG.info(String.format("callback %s now has %s permits available", this.toString(),this.permits.availablePermits()));
+//    	this.numDestinationSites = numDestinationSites;
+//    	LOG.info(String.format("initializing callback %s with %s permits",this.toString(), this.numDestinationSites));
+//        this.permits = new Semaphore(this.numDestinationSites, true);
+//        try {
+//			this.permits.acquire(this.numDestinationSites);
+//		} catch (InterruptedException e) {
+//			// ignore silently
+//		}
+//        LOG.info(String.format("callback %s now has %s permits available", this.toString(),this.permits.availablePermits()));
     }
     
     @Override
     public void run(TransactionForwardToReplicaResponse parameter) {
         if (debug.val)
             LOG.debug(String.format("Reached forwarded callback"));
-        LOG.info(String.format("Reached forwarded callback %s with %s permits", this.toString(),this.permits.availablePermits()));
-        this.permits.release();
-        LOG.info(String.format("now there are %s permits for %s", this.permits.availablePermits(), this.toString()));
+        LOG.info(String.format("Reached forwarded callback %s", this.toString()));
+//        this.permits.release();
+//        LOG.info(String.format("now there are %s permits for %s", this.permits.availablePermits(), this.toString()));
     }
     
     public void waitForFinish() {
-    	LOG.info(String.format("current number of permits available: %s",this.permits.availablePermits()));
-    	try {
-			boolean acquired = this.permits.tryAcquire(this.numDestinationSites, 5, TimeUnit.SECONDS);
-			if (acquired) {
-				LOG.info("successfully acquired while waiting for finish");
-			} else {
-				LOG.info("reached timeout when waiting for finish");
-			}
-		} catch (InterruptedException e) {
-			LOG.info("uh oh error 2");
-		}
+//    	LOG.info(String.format("current number of permits available: %s",this.permits.availablePermits()));
+//    	try {
+//			boolean acquired = this.permits.tryAcquire(this.numDestinationSites, 5, TimeUnit.SECONDS);
+//			if (acquired) {
+//				LOG.info("successfully acquired while waiting for finish");
+//			} else {
+//				LOG.info("reached timeout when waiting for finish");
+//			}
+//		} catch (InterruptedException e) {
+//			LOG.info("uh oh error 2");
+//		}
 //    	try {
 //			this.permits.acquire(this.numDestinationSites);
 //		} catch (InterruptedException e) {
@@ -75,6 +75,6 @@ public class TransactionForwardToReplicaCallback implements RpcCallback<Transact
 //		}
     	
     	// all done! (this is probably a bad way to do this)
-    	this.permits.release(this.numDestinationSites);
+//    	this.permits.release(this.numDestinationSites);
     }
 }
