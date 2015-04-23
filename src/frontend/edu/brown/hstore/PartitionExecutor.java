@@ -2723,6 +2723,16 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         final List<Integer> partitionReplicas = this.hstore_site.getPartitionReplicas(ts.getBasePartition());
         if (partitionReplicas != null) {
         	LOG.info(String.format("replicating from partition %s", ts.getBasePartition()));
+        	// semaphore
+            int numReplicas = partitionReplicas.size();
+            Semaphore transactionReplicatePermit = new Semaphore(numReplicas, true);
+            try {
+				transactionReplicatePermit.acquire(numReplicas);
+			} catch (InterruptedException e) {
+				// silently ignore
+			}
+            this.hstore_coordinator.addTransactionReplicatePermit(ts.getTransactionId(), transactionReplicatePermit);
+            
         	TransactionForwardToReplicaCallback replica_callback = new TransactionForwardToReplicaCallback(partitionReplicas.size());
 			Procedure catalog_proc = ts.getProcedure();
             StoredProcedureInvocation spi = new StoredProcedureInvocation(ts.getClientHandle(),
@@ -2740,16 +2750,6 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
             }
             
             byte[]serializedSpi = this.fs.getBytes();
-            
-            // semaphore
-            int numReplicas = partitionReplicas.size();
-            Semaphore transactionReplicatePermit = new Semaphore(numReplicas, true);
-            try {
-				transactionReplicatePermit.acquire(numReplicas);
-			} catch (InterruptedException e) {
-				// silently ignore
-			}
-            this.hstore_coordinator.addTransactionReplicatePermit(ts.getTransactionId(), transactionReplicatePermit);
             
             this.hstore_coordinator.transactionReplicate(serializedSpi, replica_callback, ts.getBasePartition()); 
             LOG.info(String.format("Waiting for finished callback %s",replica_callback.toString()));
