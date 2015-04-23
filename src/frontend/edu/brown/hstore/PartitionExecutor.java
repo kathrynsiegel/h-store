@@ -5432,6 +5432,21 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
      */
     protected void processClientResponse(LocalTransaction ts, ClientResponseImpl cresponse) {
     	LOG.info(String.format("processing client response %s",ts.toString()));
+    	// if a replicated transaction, then send acknowledgement
+        // that replication has succeeded
+        LOG.info(String.format("Checking if partition %s is a replica", this.partitionId));
+        if (this.hstore_site.getPartitionReplicas(this.partitionId) == null) {
+        	LOG.info("acknowledging the finished replication");
+        	Map<Integer, List<Integer>> partitionReplicas = this.hstore_site.getPartitionReplicasMap();
+        	Iterator<Entry<Integer, List<Integer>>> it = partitionReplicas.entrySet().iterator();
+            while (it.hasNext()) {
+            	Entry<Integer, List<Integer>> entry = it.next();
+                if (entry.getValue().contains(this.partitionId)) {
+                	LOG.info("sending finished replication callback");
+                	this.hstore_coordinator.transactionReplicateFinish(ts.getTransactionId(), entry.getKey());
+                }
+            }
+        }
         // IMPORTANT: If we executed this locally and only touched our
         // partition, then we need to commit/abort right here
         // 2010-11-14: The reason why we can do this is because we will just
@@ -5499,27 +5514,12 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         // ALL: Single-Partition Transactions
         // -------------------------------
         else if (ts.isPredictSinglePartition()) {
+        	LOG.info("is predict single partition");
             // Commit or abort the transaction only if we haven't done it
             // already
             // This can happen when we commit speculative txns out of order
             if (ts.isMarkedFinished(this.partitionId) == false) {
                 this.finishTransaction(ts, status);
-            }
-            
-            // if a replicated transaction, then send acknowledgement
-            // that replication has succeeded
-            LOG.info(String.format("Checking if partition %s is a replica", this.partitionId));
-            if (this.hstore_site.getPartitionReplicas(this.partitionId) == null) {
-            	LOG.info("acknowledging the finished replication");
-            	Map<Integer, List<Integer>> partitionReplicas = this.hstore_site.getPartitionReplicasMap();
-            	Iterator<Entry<Integer, List<Integer>>> it = partitionReplicas.entrySet().iterator();
-                while (it.hasNext()) {
-                	Entry<Integer, List<Integer>> entry = it.next();
-                    if (entry.getValue().contains(this.partitionId)) {
-                    	LOG.info("sending finished replication callback");
-                    	this.hstore_coordinator.transactionReplicateFinish(ts.getTransactionId(), entry.getKey());
-                    }
-                }
             }
 
             // We have to mark it as loggable to prevent the response
@@ -5538,6 +5538,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         // COMMIT: Distributed Transaction
         // -------------------------------
         else if (status == Status.OK) {
+        	LOG.info("is a distributed transaction");
             // We need to set the new ExecutionMode before we invoke
             // transactionPrepare
             // because the LocalTransaction handle might get cleaned up
@@ -5570,6 +5571,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         // ABORT: Distributed Transaction
         // -------------------------------
         else {
+        	LOG.info("abort distributed transaction");
             // Send back the result to the client right now, since there's no
             // way
             // that we're magically going to be able to recover this and get
@@ -5586,7 +5588,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
             // Note that when we call transactionFinish() right here this thread
             // will then go on
             // to invoke HStoreSite.transactionFinish() for us. That means when
-            // it returns we will
+            // it returns we will  
             // have successfully aborted the txn at least at all of the local
             // partitions at this site.
             if (hstore_conf.site.txn_profiling && ts.profiler != null)
