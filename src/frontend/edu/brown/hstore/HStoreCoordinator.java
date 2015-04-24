@@ -737,7 +737,7 @@ public class HStoreCoordinator implements Shutdownable {
 				permit.release();
 				LOG.info("released semaphore");
 			} else {
-				LOG.info("uh oh no semaphore exists for this transaction");
+				LOG.info(String.format("uh oh no semaphore exists for this transaction %s", request.getTxnId()));
 			}
 		}
         
