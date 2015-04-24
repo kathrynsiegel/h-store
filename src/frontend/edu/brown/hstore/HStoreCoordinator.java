@@ -709,7 +709,7 @@ public class HStoreCoordinator implements Shutdownable {
                 LOG.debug(String.format("Received %s from HStoreSite %s",
                           request.getClass().getSimpleName(),
                           HStoreThreadManager.formatSiteName(request.getSenderSite())));
-            LOG.info("sending to replica");
+            LOG.info("received at replica");
             ByteBuffer serializedRequest = request.getWork().asReadOnlyByteBuffer();
             TransactionForwardToReplicaResponseCallback callback = null;
             try {
@@ -1491,6 +1491,7 @@ public class HStoreCoordinator implements Shutdownable {
     // REPLICATION
     // ----------------------------------------------------------------------------
     public void transactionReplicate(byte[] serializedRequest, RpcCallback<TransactionForwardToReplicaResponse> replica_callback, int partition) {
+    	LOG.info("reached transactionreplicate method");
     	List<Integer> replica_sites = this.hstore_site.getPartitionReplicas(partition);
     	ArrayList<Integer> replica_partitions = new ArrayList<Integer>();
     	for (int i = 0; i < replica_sites.size(); i++) {
@@ -1506,6 +1507,7 @@ public class HStoreCoordinator implements Shutdownable {
 				TransactionForwardToReplicaRequest request = TransactionForwardToReplicaRequest.newBuilder()
 		    			.setSenderSite(this.local_site_id)
 		    			.setWork(bs).build();
+				LOG.info("sending out transactionforwardtoreplica request");
 				this.channels[replica_sites.get(j)].transactionForwardToReplica(new ProtoRpcController(), request, replica_callback);
 			} catch (RuntimeException ex) {
 				// Silently ignore these errors...
