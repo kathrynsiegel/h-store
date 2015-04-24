@@ -372,12 +372,13 @@ message TransactionRedirectResponse {
 message TransactionForwardToReplicaRequest {
     required int32 sender_site = 1;
     required bytes work = 2;
-    optional int64 orig_txn_id = 3;
+    required int64 orig_txn_id = 3;
 }
 
 message TransactionForwardToReplicaResponse {
     required int32 sender_site = 1;
     required bytes output = 2;
+    required int64 orig_txn_id = 3;
 }
 
 message TransactionReplicateFinishRequest {

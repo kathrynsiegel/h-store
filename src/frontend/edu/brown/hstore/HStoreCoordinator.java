@@ -709,12 +709,12 @@ public class HStoreCoordinator implements Shutdownable {
                 LOG.debug(String.format("Received %s from HStoreSite %s",
                           request.getClass().getSimpleName(),
                           HStoreThreadManager.formatSiteName(request.getSenderSite())));
-            LOG.info("received at replica");
+            LOG.info(String.format("transaction %s received at replica", request.getOrigTxnId()));
             ByteBuffer serializedRequest = request.getWork().asReadOnlyByteBuffer();
             TransactionForwardToReplicaResponseCallback callback = null;
             try {
                 callback = new TransactionForwardToReplicaResponseCallback(hstore_site);
-                callback.init(local_site_id, request.getSenderSite(), done);
+                callback.init(local_site_id, request.getSenderSite(), request.getOrigTxnId(), done);
             } catch (Exception ex) {
                 String msg = "Failed to get " + TransactionRedirectResponseCallback.class.getSimpleName();
                 throw new RuntimeException(msg, ex);
@@ -1490,7 +1490,7 @@ public class HStoreCoordinator implements Shutdownable {
     // ----------------------------------------------------------------------------
     // REPLICATION
     // ----------------------------------------------------------------------------
-    public void transactionReplicate(byte[] serializedRequest, RpcCallback<TransactionForwardToReplicaResponse> replica_callback, int partition) {
+    public void transactionReplicate(byte[] serializedRequest, RpcCallback<TransactionForwardToReplicaResponse> replica_callback, int partition, long transactionID) {
     	LOG.info("reached transactionreplicate method");
     	int site = catalogContext.getSiteIdForPartitionId(partition);
     	if (site == this.local_site_id) {
@@ -1501,8 +1501,9 @@ public class HStoreCoordinator implements Shutdownable {
 			ByteString bs = ByteString.copyFrom(serializedRequest);
 			TransactionForwardToReplicaRequest request = TransactionForwardToReplicaRequest.newBuilder()
 					.setSenderSite(this.local_site_id)
+					.setOrigTxnId(transactionID)
 					.setWork(bs).build();
-			LOG.info("sending out transactionforwardtoreplica request");
+			LOG.info(String.format("sending out transactionforwardtoreplica request for transaction"));
 			this.channels[site].transactionForwardToReplica(new ProtoRpcController(), request, replica_callback);
 		} catch (RuntimeException ex) {
 			// Silently ignore these errors...

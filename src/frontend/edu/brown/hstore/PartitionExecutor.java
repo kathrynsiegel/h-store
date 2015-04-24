@@ -2761,7 +2761,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
                     throw new ServerFaultException(msg, ex, tsRep.getTransactionId());
                 }
                 byte[]serializedSpi = this.fs.getBytes();
-                this.hstore_coordinator.transactionReplicate(serializedSpi, replica_callback, tsRep.getBasePartition()); 
+                this.hstore_coordinator.transactionReplicate(serializedSpi, replica_callback, tsRep.getBasePartition(), tsRep.getTransactionId()); 
         	}
             
             LOG.info(String.format("Waiting for finished callback %s, number of permits: %s",replica_callback.toString(), permit.availablePermits()));
@@ -5462,7 +5462,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
             while (it.hasNext()) {
             	Entry<Integer, List<Integer>> entry = it.next();
                 if (entry.getValue().contains(this.partitionId)) {
-                	LOG.info("sending finished replication callback");
+                	LOG.info(String.format("sending finished replication callback for transaction %s", ts.getTransactionId()));
                 	this.hstore_coordinator.transactionReplicateFinish(ts.getTransactionId(), entry.getKey());
                 }
             }
