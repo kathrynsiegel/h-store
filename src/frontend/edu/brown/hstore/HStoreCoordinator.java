@@ -204,7 +204,7 @@ public class HStoreCoordinator implements Shutdownable {
     // REPLICA FORWARDING
     // ----------------------------------------------------------------------------
     
-    private HashMap<Long, Semaphore> transactionReplicatePermits = new HashMap<Long, Semaphore>();
+    private HashMap<Long, Semaphore> transactionReplicatePermits;
     
     // ----------------------------------------------------------------------------
     // MESSENGER LISTENER THREAD
@@ -291,6 +291,7 @@ public class HStoreCoordinator implements Shutdownable {
         this.local_site_id = this.catalog_site.getId();
         this.num_sites = this.hstore_site.getCatalogContext().numberOfSites;
         this.channels = new HStoreService[this.num_sites];
+        this.transactionReplicatePermits = new HashMap<Long, Semaphore>();
         
         if (debug.val)
             LOG.debug(String.format("Local Partitions for Site #%d: %s",
