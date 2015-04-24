@@ -2731,7 +2731,10 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 			} catch (InterruptedException e) {
 				// silently ignore
 			}
-            this.hstore_coordinator.addTransactionReplicatePermit(ts.getTransactionId(), transactionReplicatePermit);
+            boolean added = this.hstore_coordinator.addTransactionReplicatePermit(ts.getTransactionId(), transactionReplicatePermit);
+            if (!added) {
+            	throw new NotImplementedException("why does this not work");
+            }
             
         	TransactionForwardToReplicaCallback replica_callback = new TransactionForwardToReplicaCallback(partitionReplicas.size());
 			Procedure catalog_proc = ts.getProcedure();

@@ -1519,9 +1519,10 @@ public class HStoreCoordinator implements Shutdownable {
      * @param txn_id
      * @param permit
      */
-    public void addTransactionReplicatePermit(Long txn_id, Semaphore permit) {
+    public boolean addTransactionReplicatePermit(Long txn_id, Semaphore permit) {
     	this.transactionReplicatePermits.put(txn_id, permit);
     	LOG.info(String.format("added permit on site %s for txn %s", this.local_site_id, txn_id));
+    	return this.transactionReplicatePermits.containsKey(txn_id);
     }
     
     /**
