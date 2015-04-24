@@ -2731,7 +2731,15 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         	LOG.info(String.format("replicating from partition %s", basePartition));
         	// semaphore and callback
         	int numReplicas = partitionReplicas.size();
+        	
+        	LOG.info("about to call semaphore method");
             Semaphore permit = this.hstore_coordinator.addTransactionReplicatePermit(ts.getTransactionId(), numReplicas);
+            try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
         	TransactionForwardToReplicaCallback replica_callback = new TransactionForwardToReplicaCallback(numReplicas);
         	
         	// send to each replica via HStoreCoordinator

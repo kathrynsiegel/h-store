@@ -1519,6 +1519,7 @@ public class HStoreCoordinator implements Shutdownable {
      * @param permit
      */
     public Semaphore addTransactionReplicatePermit(Long txn_id, int numReplicas) {
+    	LOG.info(String.format("got to semaphore for txn %s", txn_id));
     	Semaphore transactionReplicatePermit = new Semaphore(numReplicas);
         try {
 			transactionReplicatePermit.acquire(numReplicas);
