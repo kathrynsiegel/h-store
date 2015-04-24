@@ -2594,7 +2594,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
      * @param ts
      */
     private void executeTransaction(LocalTransaction ts) {
-    	LOG.info(String.format("new transaction! with callback %s", ts.getClientCallback().toString()));
+    	LOG.info(String.format("new transaction %s! with callback %s", ts.getTransactionId(), ts.getClientCallback().toString()));
         assert(ts.isInitialized()) :
             String.format("Trying to execute uninitialized transaction %s at partition %d",
                           ts, this.partitionId);
@@ -2853,12 +2853,13 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
             }
         }
 
+        LOG.info(String.format("successful transaction!! %s", ts.getTransactionId()));
+        
         // We assume that most transactions are not speculatively executed and
         // are successful
         // Therefore we don't want to grab the exec_mode lock here.
         if (predict_singlePartition == false || this.canProcessClientResponseNow(ts, status, before_mode)) {
-        	LOG.info("successful transaction!!");
-            this.processClientResponse(ts, cresponse);
+        	this.processClientResponse(ts, cresponse);
         }
         // Otherwise always queue our response, since we know that whatever
         // thread is out there
