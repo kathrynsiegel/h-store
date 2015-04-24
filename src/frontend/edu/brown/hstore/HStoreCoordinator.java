@@ -1492,28 +1492,22 @@ public class HStoreCoordinator implements Shutdownable {
     // ----------------------------------------------------------------------------
     public void transactionReplicate(byte[] serializedRequest, RpcCallback<TransactionForwardToReplicaResponse> replica_callback, int partition) {
     	LOG.info("reached transactionreplicate method");
-    	List<Integer> replica_sites = this.hstore_site.getPartitionReplicas(partition);
-    	ArrayList<Integer> replica_partitions = new ArrayList<Integer>();
-    	for (int i = 0; i < replica_sites.size(); i++) {
-    		replica_partitions.add(catalogContext.getSiteIdForPartitionId(replica_sites.get(i)));
-    	}
-		for (int j = 0; j < replica_sites.size(); j++) { 
-			if (replica_sites.get(j) == this.local_site_id) {
-				throw new NotImplementedException();
-			}
-			if (this.isShuttingDown()) break;
-			try {
-				ByteString bs = ByteString.copyFrom(serializedRequest);
-				TransactionForwardToReplicaRequest request = TransactionForwardToReplicaRequest.newBuilder()
-		    			.setSenderSite(this.local_site_id)
-		    			.setWork(bs).build();
-				LOG.info("sending out transactionforwardtoreplica request");
-				this.channels[replica_sites.get(j)].transactionForwardToReplica(new ProtoRpcController(), request, replica_callback);
-			} catch (RuntimeException ex) {
-				// Silently ignore these errors...
-			}
-		} // FOR
-    };
+    	int site = catalogContext.getSiteIdForPartitionId(partition);
+    	if (site == this.local_site_id) {
+			throw new NotImplementedException();
+		}
+		if (this.isShuttingDown()) return;
+		try {
+			ByteString bs = ByteString.copyFrom(serializedRequest);
+			TransactionForwardToReplicaRequest request = TransactionForwardToReplicaRequest.newBuilder()
+					.setSenderSite(this.local_site_id)
+					.setWork(bs).build();
+			LOG.info("sending out transactionforwardtoreplica request");
+			this.channels[site].transactionForwardToReplica(new ProtoRpcController(), request, replica_callback);
+		} catch (RuntimeException ex) {
+			// Silently ignore these errors...
+		}
+    }
     
     /**
      * Called by the primary partition when adding a Semaphore for a transaction
