@@ -2724,19 +2724,10 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         if (partitionReplicas != null) {
         	LOG.info(String.format("replicating from partition %s", ts.getBasePartition()));
         	// semaphore
-            int numReplicas = partitionReplicas.size();
-            Semaphore transactionReplicatePermit = new Semaphore(numReplicas, true);
-            try {
-				transactionReplicatePermit.acquire(numReplicas);
-			} catch (InterruptedException e) {
-				// silently ignore
-			}
-            boolean added = this.hstore_coordinator.addTransactionReplicatePermit(ts.getTransactionId(), transactionReplicatePermit);
-            if (!added) {
-            	throw new NotImplementedException("why does this not work");
-            }
+        	int numReplicas = partitionReplicas.size();
+            Semaphore permit = this.hstore_coordinator.addTransactionReplicatePermit(ts.getTransactionId(), numReplicas);
             
-        	TransactionForwardToReplicaCallback replica_callback = new TransactionForwardToReplicaCallback(partitionReplicas.size());
+        	TransactionForwardToReplicaCallback replica_callback = new TransactionForwardToReplicaCallback(numReplicas);
 			Procedure catalog_proc = ts.getProcedure();
             StoredProcedureInvocation spi = new StoredProcedureInvocation(ts.getClientHandle(),
                                                                           catalog_proc.getId(),
@@ -2755,15 +2746,16 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
             byte[]serializedSpi = this.fs.getBytes();
             
             this.hstore_coordinator.transactionReplicate(serializedSpi, replica_callback, ts.getBasePartition()); 
-            LOG.info(String.format("Waiting for finished callback %s",replica_callback.toString()));
+            LOG.info(String.format("Waiting for finished callback %s, number of permits: %s",replica_callback.toString(), permit.availablePermits()));
             
             // block until semaphore is released
             try {
-				transactionReplicatePermit.acquire(numReplicas);
+				permit.acquire(numReplicas);
 			} catch (InterruptedException e) {
+				LOG.info("uh oh error!!!");
 				// silently ignore again
 			}
-            transactionReplicatePermit.release(numReplicas);
+            permit.release(numReplicas);
             this.hstore_coordinator.removeTransactionReplicatePermit(ts.getTransactionId());
             LOG.info("Finished!");
         }
