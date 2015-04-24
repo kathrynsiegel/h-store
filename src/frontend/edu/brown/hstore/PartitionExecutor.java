@@ -2590,6 +2590,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
      * @param ts
      */
     private void executeTransaction(LocalTransaction ts) {
+    	LOG.info(String.format("new transaction! with callback %s", ts.getClientCallback().toString()));
         assert(ts.isInitialized()) :
             String.format("Trying to execute uninitialized transaction %s at partition %d",
                           ts, this.partitionId);
