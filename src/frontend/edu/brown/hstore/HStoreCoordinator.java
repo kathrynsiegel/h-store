@@ -736,6 +736,8 @@ public class HStoreCoordinator implements Shutdownable {
 			if (permit != null) {
 				permit.release();
 				LOG.info("released semaphore");
+			} else {
+				LOG.info("uh oh no semaphore exists for this transaction");
 			}
 		}
         
