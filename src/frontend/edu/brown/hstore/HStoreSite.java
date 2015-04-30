@@ -1091,8 +1091,10 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
      */
     public boolean isPrimaryPartition(int partition) {
     	assert(partition >= 0);
-    	assert(this.partitionReplicas != null);
-    	return this.partitionReplicas.get(partition) != null;
+    	if (this.partitionReplicas == null || this.partitionReplicas.get(partition) != null) {
+    		return true;
+    	}
+    	return false;
     }
     /** Returns the replicas of this partition
      * @return map of replicas

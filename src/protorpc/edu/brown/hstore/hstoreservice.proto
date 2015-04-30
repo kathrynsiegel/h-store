@@ -389,6 +389,18 @@ message TransactionReplicateFinishResponse {
 	required int64 txn_id = 1;
 }
 
+message ReplicaLoadTableRequest {
+	required int32 sender_site = 1;
+	required bytes work = 2;
+	required int64 orig_txn_id = 3;
+}
+
+message ReplicaLoadTableResponse {
+	required int32 sender_site = 1;
+	required bytes output = 2;
+	required int64 orig_txn_id = 3;
+}
+
 // -----------------------------------
 // TRANSACTION DEBUG MESSAGE
 // -----------------------------------
@@ -797,6 +809,7 @@ service HStoreService {
     rpc TransactionRedirect(TransactionRedirectRequest) returns (TransactionRedirectResponse);
     rpc TransactionForwardToReplica(TransactionForwardToReplicaRequest) returns (TransactionForwardToReplicaResponse);
     rpc TransactionReplicateFinish(TransactionReplicateFinishRequest) returns (TransactionReplicateFinishResponse);
+    rpc ReplicaLoadTable(ReplicaLoadTableRequest) returns (ReplicaLoadTableResponse);
     rpc TransactionDebug(TransactionDebugRequest) returns (TransactionDebugResponse);
     rpc SendData(SendDataRequest) returns (SendDataResponse);
     rpc Initialize(InitializeRequest) returns (InitializeResponse);

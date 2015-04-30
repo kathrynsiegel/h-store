@@ -137,7 +137,6 @@ import edu.brown.hashing.ReconfigurationPlan;
 import edu.brown.hashing.ReconfigurationPlan.ReconfigurationRange;
 import edu.brown.hstore.Hstoreservice.AsyncPullRequest;
 import edu.brown.hstore.Hstoreservice.AsyncPullResponse;
-import edu.brown.hstore.Hstoreservice.HeartbeatResponse;
 import edu.brown.hstore.Hstoreservice.LivePullRequest;
 import edu.brown.hstore.Hstoreservice.LivePullResponse;
 import edu.brown.hstore.Hstoreservice.MultiPullReplyRequest;
@@ -146,22 +145,17 @@ import edu.brown.hstore.Hstoreservice.QueryEstimate;
 import edu.brown.hstore.Hstoreservice.ReconfigurationControlRequest;
 import edu.brown.hstore.Hstoreservice.ReconfigurationControlType;
 import edu.brown.hstore.Hstoreservice.Status;
-import edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaRequest;
-import edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse;
 import edu.brown.hstore.Hstoreservice.TransactionPrefetchResult;
 import edu.brown.hstore.Hstoreservice.TransactionPrepareResponse;
 import edu.brown.hstore.Hstoreservice.TransactionWorkRequest;
 import edu.brown.hstore.Hstoreservice.TransactionWorkResponse;
 import edu.brown.hstore.Hstoreservice.WorkFragment;
 import edu.brown.hstore.Hstoreservice.WorkResult;
-import edu.brown.hstore.callbacks.BlockingRpcCallback;
 import edu.brown.hstore.callbacks.LocalFinishCallback;
 import edu.brown.hstore.callbacks.LocalPrepareCallback;
 import edu.brown.hstore.callbacks.PartitionCountingCallback;
-import edu.brown.hstore.callbacks.RedirectCallback;
 import edu.brown.hstore.callbacks.RemotePrepareCallback;
 import edu.brown.hstore.callbacks.TransactionForwardToReplicaCallback;
-import edu.brown.hstore.callbacks.TransactionForwardToReplicaResponseCallback;
 import edu.brown.hstore.conf.HStoreConf;
 import edu.brown.hstore.estimators.Estimate;
 import edu.brown.hstore.estimators.EstimatorState;
@@ -2725,66 +2719,66 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
         // -------------------------
         // REPLICATE
         // -------------------------
-//        int basePartition = ts.getBasePartition();
-//        final List<Integer> partitionReplicas = this.hstore_site.getPartitionReplicas(basePartition);
-//        if (partitionReplicas != null) {
-//        	LOG.info(String.format("replicating from partition %s", basePartition));
-//        	// semaphore and callback
-//        	int numReplicas = partitionReplicas.size();
-//        	
-//        	LOG.info("about to call semaphore method");
-//            Semaphore permit = this.hstore_coordinator.addTransactionReplicatePermit(ts.getTransactionId(), numReplicas);
-//            try {
-//				Thread.sleep(2000);
-//			} catch (InterruptedException e1) {
-//				// TODO Auto-generated catch block
-//				e1.printStackTrace();
-//			}
-//        	TransactionForwardToReplicaCallback replica_callback = new TransactionForwardToReplicaCallback(numReplicas);
-//        	
-//        	// send to each replica via HStoreCoordinator
-//        	for (int i = 0; i < partitionReplicas.size(); i++) {
-//        		LocalTransaction tsRep = new LocalTransaction(hstore_site);
-//        		tsRep.init(ts.getTransactionId(), 
-//        				System.currentTimeMillis(), 
-//        				ts.getClientHandle(), 
-//        				partitionReplicas.get(i), 
-//        				ts.getPredictTouchedPartitions(), 
-//        				ts.isPredictReadOnly(), 
-//        				ts.isPredictAbortable(), 
-//        				ts.getProcedure(), 
-//        				ts.getProcedureParameters(), 
-//        				ts.getClientCallback()); // TODO maybe fix?
-//        		Procedure catalog_proc = tsRep.getProcedure();
-//                StoredProcedureInvocation spi = new StoredProcedureInvocation(tsRep.getClientHandle(),
-//                                                                              catalog_proc.getId(),
-//                                                                              catalog_proc.getName(),
-//                                                                              tsRep.getProcedureParameters().toArray());
-//                spi.setBasePartition(tsRep.getBasePartition());
-//                spi.setRestartCounter(tsRep.getRestartCounter()+1);
-//                try {
-//                    this.fs.writeObject(spi);
-//                } catch (IOException ex) {
-//                    String msg = "Failed to serialize StoredProcedureInvocation to forward txn to replica";
-//                    throw new ServerFaultException(msg, ex, tsRep.getTransactionId());
-//                }
-//                byte[]serializedSpi = this.fs.getBytes();
-//                this.hstore_coordinator.transactionReplicate(serializedSpi, replica_callback, tsRep.getBasePartition(), tsRep.getTransactionId()); 
-//        	}
-//            
-//            LOG.info(String.format("Waiting for finished callback %s, number of permits: %s",replica_callback.toString(), permit.availablePermits()));
-//            
-//            // block until semaphore is released
-//            try {
-//				permit.acquire(numReplicas);
-//			} catch (InterruptedException e) {
-//				LOG.info("uh oh error!!!");
-//				// silently ignore again
-//			}
-//            permit.release(numReplicas);
-//            this.hstore_coordinator.removeTransactionReplicatePermit(ts.getTransactionId());
-//            LOG.info("Finished!");
-//        }
+        int basePartition = ts.getBasePartition();
+        if (this.hstore_site.isPrimaryPartition(basePartition)) {
+        	final List<Integer> partitionReplicas = this.hstore_site.getPartitionReplicas(basePartition);
+        	LOG.info(String.format("replicating from partition %s", basePartition));
+        	// semaphore and callback
+        	int numReplicas = partitionReplicas.size();
+        	
+        	LOG.info("about to call semaphore method");
+            Semaphore permit = this.hstore_coordinator.addTransactionReplicatePermit(ts.getTransactionId(), numReplicas);
+            try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+        	TransactionForwardToReplicaCallback replica_callback = new TransactionForwardToReplicaCallback(numReplicas);
+        	
+        	// send to each replica via HStoreCoordinator
+        	for (int i = 0; i < partitionReplicas.size(); i++) {
+        		LocalTransaction tsRep = new LocalTransaction(hstore_site);
+        		tsRep.init(ts.getTransactionId(), 
+        				System.currentTimeMillis(), 
+        				ts.getClientHandle(), 
+        				partitionReplicas.get(i), 
+        				ts.getPredictTouchedPartitions(), 
+        				ts.isPredictReadOnly(), 
+        				ts.isPredictAbortable(), 
+        				ts.getProcedure(), 
+        				ts.getProcedureParameters(), 
+        				ts.getClientCallback()); // TODO maybe fix?
+        		Procedure catalog_proc = tsRep.getProcedure();
+                StoredProcedureInvocation spi = new StoredProcedureInvocation(tsRep.getClientHandle(),
+                                                                              catalog_proc.getId(),
+                                                                              catalog_proc.getName(),
+                                                                              tsRep.getProcedureParameters().toArray());
+                spi.setBasePartition(tsRep.getBasePartition());
+                spi.setRestartCounter(tsRep.getRestartCounter()+1);
+                try {
+                    this.fs.writeObject(spi);
+                } catch (IOException ex) {
+                    String msg = "Failed to serialize StoredProcedureInvocation to forward txn to replica";
+                    throw new ServerFaultException(msg, ex, tsRep.getTransactionId());
+                }
+                byte[]serializedSpi = this.fs.getBytes();
+                this.hstore_coordinator.transactionReplicate(serializedSpi, replica_callback, tsRep.getBasePartition(), tsRep.getTransactionId()); 
+        	}
+            
+            LOG.info(String.format("Waiting for finished callback %s, number of permits: %s",replica_callback.toString(), permit.availablePermits()));
+            
+            // block until semaphore is released
+            try {
+				permit.acquire(numReplicas);
+			} catch (InterruptedException e) {
+				LOG.info("uh oh error!!!");
+				// silently ignore again
+			}
+            permit.release(numReplicas);
+            this.hstore_coordinator.removeTransactionReplicatePermit(ts.getTransactionId());
+            LOG.info("Finished!");
+        }
         
         if (hstore_conf.site.txn_profiling && ts.profiler != null) {
             ts.profiler.startExec();
