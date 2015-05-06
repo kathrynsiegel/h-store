@@ -22,6 +22,8 @@ import edu.brown.hstore.Hstoreservice.ReconfigurationControlRequest;
 import edu.brown.hstore.Hstoreservice.ReconfigurationControlResponse;
 import edu.brown.hstore.Hstoreservice.ReconfigurationRequest;
 import edu.brown.hstore.Hstoreservice.ReconfigurationResponse;
+import edu.brown.hstore.Hstoreservice.ReplicaLoadTableRequest;
+import edu.brown.hstore.Hstoreservice.ReplicaLoadTableResponse;
 import edu.brown.hstore.Hstoreservice.SendDataRequest;
 import edu.brown.hstore.Hstoreservice.SendDataResponse;
 import edu.brown.hstore.Hstoreservice.ShutdownPrepareRequest;
@@ -276,6 +278,14 @@ public class MockHStoreCoordinator extends HStoreCoordinator {
 		public void transactionReplicateFinish(RpcController controller,
 				TransactionReplicateFinishRequest request,
 				RpcCallback<TransactionReplicateFinishResponse> done) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void replicaLoadTable(RpcController controller,
+				ReplicaLoadTableRequest request,
+				RpcCallback<ReplicaLoadTableResponse> done) {
 			// TODO Auto-generated method stub
 			
 		}

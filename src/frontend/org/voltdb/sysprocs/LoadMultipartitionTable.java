@@ -34,6 +34,7 @@ import org.voltdb.catalog.MaterializedViewInfo;
 import org.voltdb.catalog.Table;
 import org.voltdb.exceptions.MispredictionException;
 
+
 import edu.brown.catalog.CatalogUtil;
 import edu.brown.hstore.HStoreConstants;
 import edu.brown.hstore.PartitionExecutor.SystemProcedureExecutionContext;
@@ -102,8 +103,11 @@ public class LoadMultipartitionTable extends VoltSystemProcedure {
                                         context.getDatabase().getName(),
                                         table_name, table, 0);   
                 	
-                	// forward to replica
-                	
+                	// forward to replicas
+                	this.executor.replicaLoadTable(ts,
+                			context.getCluster().getName(),
+                            context.getDatabase().getName(),
+                            table_name, table, 0);
                 }
             } catch (VoltAbortException e) {
                 // must continue and reply with dependency.

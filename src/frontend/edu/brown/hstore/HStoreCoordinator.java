@@ -55,6 +55,8 @@ import edu.brown.hstore.Hstoreservice.ReconfigurationControlResponse;
 import edu.brown.hstore.Hstoreservice.ReconfigurationControlType;
 import edu.brown.hstore.Hstoreservice.ReconfigurationRequest;
 import edu.brown.hstore.Hstoreservice.ReconfigurationResponse;
+import edu.brown.hstore.Hstoreservice.ReplicaLoadTableRequest;
+import edu.brown.hstore.Hstoreservice.ReplicaLoadTableResponse;
 import edu.brown.hstore.Hstoreservice.SendDataRequest;
 import edu.brown.hstore.Hstoreservice.SendDataResponse;
 import edu.brown.hstore.Hstoreservice.ShutdownPrepareRequest;
@@ -106,6 +108,7 @@ import edu.brown.hstore.handlers.TransactionPrefetchHandler;
 import edu.brown.hstore.handlers.TransactionPrepareHandler;
 import edu.brown.hstore.handlers.TransactionReduceHandler;
 import edu.brown.hstore.handlers.TransactionWorkHandler;
+import edu.brown.hstore.internal.ReplicaLoadTableMessage;
 import edu.brown.hstore.specexec.PrefetchQueryPlanner;
 import edu.brown.hstore.txns.AbstractTransaction;
 import edu.brown.hstore.txns.DependencyTracker;
@@ -739,6 +742,12 @@ public class HStoreCoordinator implements Shutdownable {
 			} else {
 				LOG.info(String.format("uh oh no semaphore exists for this transaction %s", request.getTxnId()));
 			}
+		}
+        
+        @Override
+		public void replicaLoadTable(RpcController controller, ReplicaLoadTableRequest request,
+				RpcCallback<ReplicaLoadTableResponse> done) {
+			request.getWork();
 		}
         
         @Override
@@ -1495,7 +1504,9 @@ public class HStoreCoordinator implements Shutdownable {
     // ----------------------------------------------------------------------------
     // REPLICATION
     // ----------------------------------------------------------------------------
-    public void transactionReplicate(byte[] serializedRequest, RpcCallback<TransactionForwardToReplicaResponse> replica_callback, int partition, long transactionID) {
+    public void transactionReplicate(byte[] serializedRequest, 
+    		RpcCallback<TransactionForwardToReplicaResponse> replica_callback, 
+    		int partition, long transactionID) {
     	LOG.info("reached transactionreplicate method");
     	int site = catalogContext.getSiteIdForPartitionId(partition);
     	if (site == this.local_site_id) {
@@ -1551,9 +1562,45 @@ public class HStoreCoordinator implements Shutdownable {
      * @param txn_id
      */
     public void transactionReplicateFinish(Long txn_id, int partition) {
-    	LOG.info(String.format("sending transaction finish for %s from site %s to site %s", txn_id, this.local_site_id, catalogContext.getSiteIdForPartitionId(partition)));
-    	TransactionReplicateFinishRequest request = TransactionReplicateFinishRequest.newBuilder().setTxnId(txn_id).build();
-    	this.channels[catalogContext.getSiteIdForPartitionId(partition)].transactionReplicateFinish(new ProtoRpcController(), request, null);
+    	LOG.info(String.format("sending transaction finish for %s from site %s to site %s", 
+    			txn_id, this.local_site_id, catalogContext.getSiteIdForPartitionId(partition)));
+    	TransactionReplicateFinishRequest request = TransactionReplicateFinishRequest.newBuilder()
+    			.setTxnId(txn_id).build();
+    	this.channels[catalogContext.getSiteIdForPartitionId(partition)]
+    			.transactionReplicateFinish(new ProtoRpcController(), request, null);
+    }
+    
+    public void replicaLoadTable(byte[] serializedRequest, 
+    		RpcCallback<ReplicaLoadTableResponse> replica_callback, int partition, 
+    		long transactionID, String clusterName,
+			String databaseName, String tableName, 
+			VoltTable vt, int allowELT) {
+    	int site = catalogContext.getSiteIdForPartitionId(partition);
+    	if (site == this.local_site_id) {
+			throw new NotImplementedException();
+		}
+		if (this.isShuttingDown()) return;
+    	ByteString bs = ByteString.copyFrom(serializedRequest);
+    	ByteString bs_vt = null;
+        byte bytes[] = null;
+        try {
+            bytes = ByteBuffer.wrap(FastSerializer.serialize(vt)).array();
+            bs_vt = ByteString.copyFrom(bytes); 
+        } catch (Exception ex) {
+            String msg = String.format("Unexpected error when serializing volt table data");
+            throw new ServerFaultException(msg, ex, transactionID);
+        }
+		ReplicaLoadTableRequest request = ReplicaLoadTableRequest.newBuilder()
+    			.setSenderSite(this.local_site_id)
+    			.setWork(bs)
+    			.setClusterName(clusterName)
+    			.setDatabaseName(databaseName)
+    			.setTableName(tableName)
+    			.setData(bs_vt)
+    			.setAllowELT(allowELT)
+    			.setOrigTxnId(transactionID).build();
+		LOG.info(String.format("sending out transactionReplicateFinish request for transaction"));
+		this.channels[site].replicaLoadTable(new ProtoRpcController(), request, replica_callback);
     }
     
     
