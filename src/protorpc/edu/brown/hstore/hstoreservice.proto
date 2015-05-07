@@ -400,6 +400,7 @@ message ReplicaLoadTableRequest {
 	required int32 allow_ELT = 7;
 	required int64 orig_txn_id = 8;
 	required int32 partition = 9;
+	required int64 txn_id = 10;
 }
 
 message ReplicaLoadTableResponse {

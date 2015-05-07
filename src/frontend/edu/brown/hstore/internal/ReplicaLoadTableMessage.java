@@ -10,7 +10,7 @@ import edu.brown.hstore.txns.AbstractTransaction;
 import edu.brown.profilers.ProfileMeasurement;
 
 public class ReplicaLoadTableMessage extends InternalMessage {	
-	public AbstractTransaction ts;
+	public long txnId;
 	public String clusterName;
 	public String databaseName;
 	public String tableName;
@@ -19,13 +19,12 @@ public class ReplicaLoadTableMessage extends InternalMessage {
 	public long createTime;
     
     
-    public ReplicaLoadTableMessage(
-    		AbstractTransaction ts,
+    public ReplicaLoadTableMessage(long txnId,
     		String clusterName,
 			String databaseName, String tableName, 
 			VoltTable data, int allowELT) {
         super();
-        this.ts = ts;
+        this.txnId = txnId;
         this.clusterName = clusterName;
         this.databaseName = databaseName;
         this.tableName = tableName;
@@ -33,9 +32,9 @@ public class ReplicaLoadTableMessage extends InternalMessage {
         this.allowELT = allowELT;
         this.createTime = ProfileMeasurement.getTime();
     }
-
-    public AbstractTransaction getAbstractTransaction() {
-    	return ts;
+    
+    public long getTxnId() {
+    	return this.txnId;
     }
     
     public long getQueueTime(){
@@ -58,7 +57,7 @@ public class ReplicaLoadTableMessage extends InternalMessage {
     	return data;
     }
     
-    public int allowELT() {
+    public int getAllowELT() {
     	return allowELT;
     }
     

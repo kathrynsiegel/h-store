@@ -175,6 +175,7 @@ import edu.brown.hstore.internal.MultiDataPullResponseMessage;
 import edu.brown.hstore.internal.PotentialSnapshotWorkMessage;
 import edu.brown.hstore.internal.PrepareTxnMessage;
 import edu.brown.hstore.internal.ReconfigUtilRequestMessage;
+import edu.brown.hstore.internal.ReplicaLoadTableMessage;
 import edu.brown.hstore.internal.ScheduleAsyncPullRequestMessage;
 import edu.brown.hstore.internal.SetDistributedTxnMessage;
 import edu.brown.hstore.internal.StartTxnMessage;
@@ -1669,6 +1670,8 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 					"(%s) Reconfig util request. Work Queue Size: %s",
 					this.partitionId, this.work_queue.size()));
 			processReconfigUtilRequestMessage((ReconfigUtilRequestMessage) work);
+		} else if (work instanceof ReplicaLoadTableMessage) {
+			processReplicaLoadTableMessage((ReplicaLoadTableMessage) work);
 		} else if (work instanceof AsyncDataPullResponseMessage) {
 			// We have received and are processing a data pull response
 			LOG.info("Processing the pull response message received");
@@ -1898,6 +1901,15 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 			String msg = "Unexpected work message in queue: " + work;
 			throw new ServerFaultException(msg, this.currentTxnId);
 		}
+	}
+
+	private void processReplicaLoadTableMessage(ReplicaLoadTableMessage work) {
+		this.loadTable(this.hstore_site.getTransaction(work.getTxnId()),
+                work.getClusterName(),
+                work.getDatabaseName(),
+                work.getTableName(),
+                work.getData(), 
+                work.getAllowELT());
 	}
 
 	/**

@@ -747,16 +747,6 @@ public class HStoreCoordinator implements Shutdownable {
         @Override
 		public void replicaLoadTable(RpcController controller, ReplicaLoadTableRequest request,
 				RpcCallback<ReplicaLoadTableResponse> done) {
-			AbstractTransaction ts = null;
-			try {
-				ByteString tsBytes = request.getWork();
-				ts = FastDeserializer.deserialize(tsBytes.toByteArray(), AbstractTransaction.class);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				LOG.error("Error in deserializing work");
-			}
-			int partition = ts.getBasePartition();
-			
 			VoltTable data = null;
 			try {
 				ByteString bytes = request.getData();
@@ -766,14 +756,14 @@ public class HStoreCoordinator implements Shutdownable {
 				LOG.error("Error in deserializing volt table");
 			}
 			
-			
-			ReplicaLoadTableMessage loadTableMessage = new ReplicaLoadTableMessage(ts,
+			ReplicaLoadTableMessage loadTableMessage = new ReplicaLoadTableMessage(
+					request.getOrigTxnId(),
 					request.getClusterName(),
 					request.getDatabaseName(),
 					request.getTableName(),
 					data, 
 					request.getAllowELT());
-			hstore_site.getPartitionExecutor(partition).queueUtilityWork(loadTableMessage);
+			hstore_site.getPartitionExecutor(request.getPartition()).queueUtilityWork(loadTableMessage);
 			
 		}
         
@@ -1625,7 +1615,8 @@ public class HStoreCoordinator implements Shutdownable {
     			.setTableName(tableName)
     			.setData(bs_vt)
     			.setAllowELT(allowELT)
-    			.setOrigTxnId(transactionID).build();
+    			.setOrigTxnId(transactionID)
+    			.setPartition(partition).build();
 		LOG.info(String.format("sending out transactionReplicateFinish request for transaction"));
 		this.channels[site].replicaLoadTable(new ProtoRpcController(), request, replica_callback);
     }
