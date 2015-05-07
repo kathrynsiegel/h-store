@@ -747,7 +747,34 @@ public class HStoreCoordinator implements Shutdownable {
         @Override
 		public void replicaLoadTable(RpcController controller, ReplicaLoadTableRequest request,
 				RpcCallback<ReplicaLoadTableResponse> done) {
-			request.getWork();
+			AbstractTransaction ts = null;
+			try {
+				ByteString tsBytes = request.getWork();
+				ts = FastDeserializer.deserialize(tsBytes.toByteArray(), AbstractTransaction.class);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				LOG.error("Error in deserializing work");
+			}
+			int partition = ts.getBasePartition();
+			
+			VoltTable data = null;
+			try {
+				ByteString bytes = request.getData();
+				data = FastDeserializer.deserialize(bytes.toByteArray(), VoltTable.class);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				LOG.error("Error in deserializing volt table");
+			}
+			
+			
+			ReplicaLoadTableMessage loadTableMessage = new ReplicaLoadTableMessage(ts,
+					request.getClusterName(),
+					request.getDatabaseName(),
+					request.getTableName(),
+					data, 
+					request.getAllowELT());
+			hstore_site.getPartitionExecutor(partition).queueUtilityWork(loadTableMessage);
+			
 		}
         
         @Override

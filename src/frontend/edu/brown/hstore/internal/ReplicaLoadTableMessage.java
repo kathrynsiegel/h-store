@@ -3,18 +3,14 @@ package edu.brown.hstore.internal;
 import org.voltdb.VoltTable;
 
 import edu.brown.hashing.ExplicitPartitions;
+import edu.brown.hstore.txns.AbstractTransaction;
 //import edu.brown.hashing.ReconfigurationPlan;
 //import edu.brown.hstore.reconfiguration.ReconfigurationConstants.ReconfigurationProtocols;
 //import edu.brown.hstore.reconfiguration.ReconfigurationCoordinator.ReconfigurationState;
 import edu.brown.profilers.ProfileMeasurement;
 
-public class ReplicaLoadTableMessage extends InternalMessage {
-	public enum RequestType {
-		INIT_RECONFIGURATION,
-		END_RECONFIGURATION
-	}
-    
-	private RequestType requestType;	
+public class ReplicaLoadTableMessage extends InternalMessage {	
+	public AbstractTransaction ts;
 	public String clusterName;
 	public String databaseName;
 	public String tableName;
@@ -24,10 +20,12 @@ public class ReplicaLoadTableMessage extends InternalMessage {
     
     
     public ReplicaLoadTableMessage(
+    		AbstractTransaction ts,
     		String clusterName,
 			String databaseName, String tableName, 
 			VoltTable data, int allowELT) {
         super();
+        this.ts = ts;
         this.clusterName = clusterName;
         this.databaseName = databaseName;
         this.tableName = tableName;
@@ -36,6 +34,10 @@ public class ReplicaLoadTableMessage extends InternalMessage {
         this.createTime = ProfileMeasurement.getTime();
     }
 
+    public AbstractTransaction getAbstractTransaction() {
+    	return ts;
+    }
+    
     public long getQueueTime(){
         return ProfileMeasurement.getTime() - this.createTime;
     }
