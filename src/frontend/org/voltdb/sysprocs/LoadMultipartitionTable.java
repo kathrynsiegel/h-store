@@ -102,7 +102,7 @@ public class LoadMultipartitionTable extends VoltSystemProcedure {
                                         context.getCluster().getName(),
                                         context.getDatabase().getName(),
                                         table_name, table, 0);   
-                	
+                	LOG.info("loading table and sendign to replica");
                 	// forward to replicas
                 	this.executor.replicaLoadTable(ts,
                 			context.getCluster().getName(),
