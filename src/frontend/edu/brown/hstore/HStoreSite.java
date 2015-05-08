@@ -101,6 +101,7 @@ import edu.brown.hstore.estimators.remote.RemoteEstimatorState;
 import edu.brown.hstore.internal.SetDistributedTxnMessage;
 import edu.brown.hstore.reconfiguration.ReconfigurationCoordinator;
 import edu.brown.hstore.reconfiguration.ReconfigurationConstants.ReconfigurationProtocols;
+import edu.brown.hstore.replication.ReplicationType;
 import edu.brown.hstore.stats.AntiCacheManagerProfilerStats;
 import edu.brown.hstore.stats.BatchPlannerProfilerStats;
 import edu.brown.hstore.stats.MarkovEstimatorProfilerStats;
@@ -666,6 +667,13 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
                 ((TwoTieredRangeHasher)this.hasher).setReconfigCoord(this.reconfiguration_coordinator);
                 this.partitionReplicas = ((TwoTieredRangeHasher)this.hasher).getPartitionReplicas();
             }   
+        }
+        
+        ReplicationType replicationType = ReplicationType.get(hstore_conf.site.replication_protocol);
+        if(replicationType != null && replicationType != ReplicationType.NONE){
+            LOG.info("Replication Protocol enabled: " + replicationType.toString());
+        } else{ 
+            LOG.info("No Replication Protocol");
         }
         
         // First we need to tell the HStoreCoordinator to start-up and initialize its connections
