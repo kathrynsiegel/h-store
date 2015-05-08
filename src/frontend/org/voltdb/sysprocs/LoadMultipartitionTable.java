@@ -77,7 +77,8 @@ public class LoadMultipartitionTable extends VoltSystemProcedure {
                                              ParameterSet params,
                                              SystemProcedureExecutionContext context) {
         
-        // need to return something ..
+        LOG.info(String.format("executing plan fragment %s", fragmentId));
+    	// need to return something ..
         VoltTable[] result = new VoltTable[1];
         result[0] = new VoltTable(new VoltTable.ColumnInfo("TxnId", VoltType.BIGINT));
         result[0].addRow(txn_id);
