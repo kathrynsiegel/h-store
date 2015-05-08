@@ -87,4 +87,8 @@ public class TransactionForwardToReplicaResponseCallback implements RpcCallback<
                       parameter.getTransactionId(), HStoreThreadManager.formatSiteName(this.destSiteId),
                       bs.size()));
     }
+    
+    public long getOrigTxnId() {
+    	return this.orig_txn_id;
+    }
 }

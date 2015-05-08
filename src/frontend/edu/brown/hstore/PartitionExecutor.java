@@ -157,6 +157,7 @@ import edu.brown.hstore.callbacks.LocalPrepareCallback;
 import edu.brown.hstore.callbacks.PartitionCountingCallback;
 import edu.brown.hstore.callbacks.RemotePrepareCallback;
 import edu.brown.hstore.callbacks.TransactionForwardToReplicaCallback;
+import edu.brown.hstore.callbacks.TransactionForwardToReplicaResponseCallback;
 import edu.brown.hstore.conf.HStoreConf;
 import edu.brown.hstore.estimators.Estimate;
 import edu.brown.hstore.estimators.EstimatorState;
@@ -2919,8 +2920,12 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 	 * @param ts
 	 */
 	private void executeTransaction(LocalTransaction ts) {
-		LOG.info(String.format("new transaction %s! with callback %s",
+		LOG.info(String.format("new transaction %s! with callback %s %s",
 				ts.getTransactionId(), ts.getClientCallback().toString()));
+		if (ts.getClientCallback() instanceof TransactionForwardToReplicaResponseCallback) {
+			TransactionForwardToReplicaResponseCallback responseCallback = (TransactionForwardToReplicaResponseCallback)ts.getClientCallback();
+			LOG.info(String.format("%s", responseCallback.getOrigTxnId()));
+		}
 		assert (ts.isInitialized()) : String
 				.format("Trying to execute uninitialized transaction %s at partition %d",
 						ts, this.partitionId);
