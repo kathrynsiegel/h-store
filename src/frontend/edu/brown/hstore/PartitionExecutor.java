@@ -5064,6 +5064,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		if (debug.val)
 			LOG.debug(String.format("Loading %d row(s) into %s [txnId=%d]",
 					data.getRowCount(), table.getName(), transactionID));
+		LOG.info("load table on replica");
 //		ts.markExecutedWork(this.partitionId);
 		long start = System.currentTimeMillis();
 		this.ee.loadTable(table.getRelativeIndex(), data,
