@@ -481,11 +481,11 @@ public final class HStoreConf {
         @ConfigProperty(
             description="This controls what conflict detection algorithm the SpecExecScheduler will use " +
             		    "to use at run time to decide what transactions to run speculatively.",
-            defaultString="TABLE",
+            defaultString="NONE",
             experimental=false,
-            enumOptions="org.voltdb.types.SpeculationConflictCheckerType"
+            enumOptions="edu.brown.hstore.replication.ReplicationType"
         )
-        public String specexec_scheduler_checker;
+        public String replication_protocol;
         
         @ConfigProperty(
             description="Speculative policy to pick the transactions to run speculatively. ",
@@ -838,6 +838,18 @@ public final class HStoreConf {
                 experimental=true
         )
         public int reconfig_max_transfer_bytes;
+        
+        //-----------------------------
+        // Replication 
+        // --------------------------------
+        @ConfigProperty(
+                description="This controls what conflict detection algorithm the SpecExecScheduler will use " +
+                            "to use at run time to decide what transactions to run speculatively.",
+                defaultString="TABLE",
+                experimental=false,
+                enumOptions="org.voltdb.types.SpeculationConflictCheckerType"
+            )
+            public String specexec_scheduler_checker;
         
         // ----------------------------------------------------------------------------
         // Storage Options
