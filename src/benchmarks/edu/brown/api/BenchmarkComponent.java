@@ -1031,7 +1031,7 @@ public abstract class BenchmarkComponent {
         int byteCount = vt.getUnderlyingBufferSize();
         long byteTotal = m_tableBytes.get(tableName, 0);
         
-        if (trace.val) LOG.trace(String.format("%s: Loading %d new rows - TOTAL %d [bytes=%d/%d]",
+        if (debug.val) LOG.debug(String.format("%s: Loading %d new rows - TOTAL %d [bytes=%d/%d]",
                                    tableName.toUpperCase(), rowCount, rowTotal, byteCount, byteTotal));
         
         // Load up this dirty mess...
