@@ -670,10 +670,10 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
         }
         
         ReplicationType replicationType = ReplicationType.get(hstore_conf.site.replication_protocol);
-        if(replicationType != ReplicationType.NONE){
-            LOG.info("Replication enabled: " + replicationType.toString());
+        if(replicationType != null && replicationType != ReplicationType.NONE){
+            LOG.info("Replication Protocol enabled: " + replicationType.toString());
         } else{ 
-            LOG.info("No replication");
+            LOG.info("No Replication Protocol");
         }
         
         // First we need to tell the HStoreCoordinator to start-up and initialize its connections
