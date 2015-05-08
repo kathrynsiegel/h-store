@@ -3110,6 +3110,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 							tsRep.getTransactionId());
 				}
 				byte[] serializedSpi = this.fs.getBytes();
+				LOG.info(String.format("sending transaction %s to replica", tsRep.getTransactionId()));
 				this.hstore_coordinator.transactionReplicate(serializedSpi,
 						replica_callback, tsRep.getBasePartition(),
 						tsRep.getTransactionId());
