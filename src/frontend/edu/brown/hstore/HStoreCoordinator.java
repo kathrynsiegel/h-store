@@ -1590,17 +1590,13 @@ public class HStoreCoordinator implements Shutdownable {
     		long transactionID, String clusterName,
 			String databaseName, String tableName, 
 			VoltTable vt, int allowELT) {
-    	LOG.info("here");
     	int site = catalogContext.getSiteIdForPartitionId(partition);
     	if (site == this.local_site_id) {
 			throw new NotImplementedException();
 		}
-    	LOG.info("here");
 		if (this.isShuttingDown()) return;
-//    	ByteString bs = ByteString.copyFrom(serializedRequest);
     	ByteString bs_vt = null;
         byte bytes[] = null;
-        LOG.info("here");
         try {
             bytes = ByteBuffer.wrap(FastSerializer.serialize(vt)).array();
             bs_vt = ByteString.copyFrom(bytes); 
