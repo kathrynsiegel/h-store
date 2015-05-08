@@ -8379,7 +8379,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 			String databaseName, String tableName, VoltTable data, int allowELT) {
 		final List<Integer> partitionReplicas = this.hstore_site
 				.getPartitionReplicas(ts.getBasePartition());
-
+		LOG.info(String.format("replica load table method on primary %s", ts.getBasePartition()));
 		// send to each replica via HStoreCoordinator
 		for (int i = 0; i < partitionReplicas.size(); i++) {
 			LocalTransaction tsRep = new LocalTransaction(hstore_site);
@@ -8410,6 +8410,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 						tsRep.getTransactionId());
 			}
 			byte[] serializedSpi = this.fs.getBytes();
+			LOG.info("about to call replicaloadtable on primary");
 			this.hstore_coordinator.replicaLoadTable(serializedSpi,
 					replica_callback, tsRep.getBasePartition(),
 					tsRep.getTransactionId(), clusterName, databaseName, tableName, data, allowELT);
