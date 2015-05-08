@@ -8403,9 +8403,11 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 							.toArray());
 			spi.setBasePartition(tsRep.getBasePartition());
 			spi.setRestartCounter(tsRep.getRestartCounter() + 1);
+			LOG.info("here");
 			try {
 				this.fs.writeObject(spi);
 			} catch (IOException ex) {
+				LOG.info("oops! exception");
 				String msg = "Failed to serialize StoredProcedureInvocation to forward txn to replica";
 				throw new ServerFaultException(msg, ex,
 						tsRep.getTransactionId());
