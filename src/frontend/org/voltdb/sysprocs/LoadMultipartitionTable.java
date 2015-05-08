@@ -100,7 +100,7 @@ public class LoadMultipartitionTable extends VoltSystemProcedure {
                 AbstractTransaction ts = this.hstore_site.getTransaction(txn_id);
                 LOG.info(String.format("got load multipartition table txn %s %s", ts.getBasePartition(), 
                 		this.hstore_site.isPrimaryPartition(ts.getBasePartition())));
-                if (this.hstore_site.isPrimaryPartition(ts.getBasePartition())) { // only carry out this txn if a primary
+                if (this.hstore_site.isPrimaryPartition(this.executor.getPartitionId())) { // only carry out this txn if a primary
                 	LOG.info("loading table and sending to replica");
                 	this.executor.loadTable(ts,
                                         context.getCluster().getName(),
