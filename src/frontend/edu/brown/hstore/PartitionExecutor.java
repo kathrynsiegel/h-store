@@ -2920,7 +2920,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 	 * @param ts
 	 */
 	private void executeTransaction(LocalTransaction ts) {
-		LOG.info(String.format("new transaction %s! with callback %s %s",
+		LOG.info(String.format("new transaction %s! with callback %s",
 				ts.getTransactionId(), ts.getClientCallback().toString()));
 		if (ts.getClientCallback() instanceof TransactionForwardToReplicaResponseCallback) {
 			TransactionForwardToReplicaResponseCallback responseCallback = (TransactionForwardToReplicaResponseCallback)ts.getClientCallback();
