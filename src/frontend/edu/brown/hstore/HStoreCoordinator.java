@@ -747,6 +747,7 @@ public class HStoreCoordinator implements Shutdownable {
         @Override
 		public void replicaLoadTable(RpcController controller, ReplicaLoadTableRequest request,
 				RpcCallback<ReplicaLoadTableResponse> done) {
+        	LOG.info(String.format("load table txn on replica %s", request.getPartition()));
 			VoltTable data = null;
 			try {
 				ByteString bytes = request.getData();

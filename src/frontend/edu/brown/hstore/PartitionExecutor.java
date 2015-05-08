@@ -1672,6 +1672,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 					this.partitionId, this.work_queue.size()));
 			processReconfigUtilRequestMessage((ReconfigUtilRequestMessage) work);
 		} else if (work instanceof ReplicaLoadTableMessage) {
+			LOG.info("got replica load table message");
 			processReplicaLoadTableMessage((ReplicaLoadTableMessage) work);
 		} else if (work instanceof AsyncDataPullResponseMessage) {
 			// We have received and are processing a data pull response
@@ -1905,6 +1906,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 	}
 
 	private void processReplicaLoadTableMessage(ReplicaLoadTableMessage work) {
+		LOG.info("loading data in replica table");
 		this.loadTable(this.hstore_site.getTransaction(work.getTxnId()),
                 work.getClusterName(),
                 work.getDatabaseName(),
