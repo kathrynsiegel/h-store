@@ -98,7 +98,8 @@ public class LoadMultipartitionTable extends VoltSystemProcedure {
             assert(this.isInitialized()) : " The sysproc " + this.getClass().getSimpleName() + " was not initialized properly";
             try {
                 AbstractTransaction ts = this.hstore_site.getTransaction(txn_id);
-                LOG.info("got load multipartition table txn");
+                LOG.info(String.format("got load multipartition table txn %s %s", ts.getBasePartition(), 
+                		this.hstore_site.isPrimaryPartition(ts.getBasePartition())));
                 if (this.hstore_site.isPrimaryPartition(ts.getBasePartition())) { // only carry out this txn if a primary
                 	LOG.info("loading table and sending to replica");
                 	this.executor.loadTable(ts,
@@ -111,6 +112,8 @@ public class LoadMultipartitionTable extends VoltSystemProcedure {
                 			context.getCluster().getName(),
                             context.getDatabase().getName(),
                             table_name, table, 0);
+                } else {
+                	LOG.info("skipping load table");
                 }
             } catch (VoltAbortException e) {
                 // must continue and reply with dependency.
