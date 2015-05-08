@@ -1058,10 +1058,6 @@ public class HStoreCoordinator implements Shutdownable {
         assert(callback != null) :
             String.format("Trying to initialize %s with a null TransactionInitCallback", ts);
         
-//        // if we are replicating transactions, don't perform system procedures on the replica
-//        if (ts.isSysProc() && !this.hstore_site.isPrimaryPartition(ts.getBasePartition())) {
-//        	LOG.debug("skipping transaction because it's a system procedure running on non primary");
-//        }
         
         ParameterSet procParams = ts.getProcedureParameters();
         FastSerializer fs = this.serializers.get();

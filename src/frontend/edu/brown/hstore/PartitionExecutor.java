@@ -6444,7 +6444,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		// that replication has succeeded
 		LOG.info(String.format("Checking if partition %s is a replica",
 				this.partitionId));
-		if (this.hstore_site.getPartitionReplicas(this.partitionId) == null) {
+		if (!ts.isSysProc() && this.hstore_site.getPartitionReplicas(this.partitionId) == null) {
 			LOG.info("acknowledging the finished replication");
 			Map<Integer, List<Integer>> partitionReplicas = this.hstore_site
 					.getPartitionReplicasMap();
@@ -8383,6 +8383,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 				@Override
 				public void run(ReplicaLoadTableResponse parameter) {
 					// TODO Auto-generated method stub
+					LOG.info("replicated log table");
 				}
 			};
 			tsRep.init(ts.getTransactionId(), System.currentTimeMillis(),
