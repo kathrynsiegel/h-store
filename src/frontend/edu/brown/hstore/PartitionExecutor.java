@@ -6458,12 +6458,14 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 					.entrySet().iterator();
 			while (it.hasNext()) {
 				Entry<Integer, List<Integer>> entry = it.next();
-				if (entry.getValue().contains(this.partitionId)) {
+				if (entry.getValue().contains(this.partitionId) && ts.getClientCallback() instanceof TransactionForwardToReplicaResponseCallback) {
 					LOG.info(String
 							.format("sending finished replication callback for transaction %s",
 									ts.getTransactionId()));
 					this.hstore_coordinator.transactionReplicateFinish(
-							ts.getTransactionId(), entry.getKey());
+							((TransactionForwardToReplicaResponseCallback)ts.getClientCallback()).getOrigTxnId(), entry.getKey());
+				} else {
+					LOG.info("uh oh shouldn't happen");
 				}
 			}
 		}
