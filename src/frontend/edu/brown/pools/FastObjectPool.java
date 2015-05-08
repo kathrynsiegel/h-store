@@ -155,7 +155,7 @@ public class FastObjectPool<T> extends BaseObjectPool {
                 shouldDestroy = true;
                 toBeDestroyed = this.pool.poll(); // remove the stalest object
             }
-            if (debug.val)
+            if (trace.val)
                 LOG.debug(String.format("Returning %s back to ObjectPool [hashCode=%d]",
                           t.getClass().getSimpleName(), t.hashCode()));
             this.pool.offer(t);
