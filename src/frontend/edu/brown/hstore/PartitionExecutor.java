@@ -8422,7 +8422,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		LOG.info(String.format("replica load table method on primary %s %s", this.getPartitionId(), partitionReplicas.size()));
 		// send to each replica via HStoreCoordinator
 		for (int i = 0; i < partitionReplicas.size(); i++) {
-			LocalTransaction tsRep = new LocalTransaction(hstore_site);
+//			LocalTransaction tsRep = new LocalTransaction(hstore_site);
 			RpcCallback<ReplicaLoadTableResponse> replica_callback = new RpcCallback<ReplicaLoadTableResponse>() {
 				@Override
 				public void run(ReplicaLoadTableResponse parameter) {
@@ -8430,7 +8430,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 					LOG.info("replicated log table");
 				}
 			};
-//			LOG.info("initializing new load table transaction");
+//			LOG.info/("initializing new load table transaction");
 //			tsRep.init(ts.getTransactionId(), System.currentTimeMillis(),
 //					"", partitionReplicas.get(i),
 //					ts.getPredictTouchedPartitions(), ts.isPredictReadOnly(),
@@ -8458,8 +8458,8 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 //			}
 //			byte[] serializedSpi = this.fs.getBytes();
 			LOG.info("about to call replicaloadtable on primary");
-			this.hstore_coordinator.replicaLoadTable(replica_callback, tsRep.getBasePartition(),
-					tsRep.getTransactionId(), clusterName, databaseName, tableName, data, allowELT);
+			this.hstore_coordinator.replicaLoadTable(replica_callback, partitionReplicas.get(i),
+					ts.getTransactionId(), clusterName, databaseName, tableName, data, allowELT);
 		}
 	}
 }
