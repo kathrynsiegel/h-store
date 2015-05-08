@@ -125,7 +125,7 @@ public class FastObjectPool<T> extends BaseObjectPool {
         }
         this.numActive.incrementAndGet();
         
-        if (debug.val)
+        if (trace.val)
             LOG.debug(String.format("Retrieved %s from ObjectPool [hashCode=%d]",
                       obj.getClass().getSimpleName(), obj.hashCode()));
             

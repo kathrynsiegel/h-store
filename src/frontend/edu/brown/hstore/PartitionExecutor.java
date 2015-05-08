@@ -3071,7 +3071,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		// REPLICATE
 		// -------------------------
 		int basePartition = ts.getBasePartition();
-		if (this.hstore_site.isPrimaryPartition(basePartition)) {
+		if (!ts.isSysProc() && this.hstore_site.isPrimaryPartition(basePartition)) {
 			final List<Integer> partitionReplicas = this.hstore_site
 					.getPartitionReplicas(basePartition);
 			LOG.info(String.format("replicating from partition %s",
@@ -3130,6 +3130,8 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 			this.hstore_coordinator.removeTransactionReplicatePermit(ts
 					.getTransactionId());
 			LOG.info("Finished!");
+		} else {
+			LOG.info("is sys proc so ignoring");
 		}
 
 		if (hstore_conf.site.txn_profiling && ts.profiler != null) {
