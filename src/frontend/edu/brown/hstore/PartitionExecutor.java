@@ -6440,12 +6440,6 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 	protected void processClientResponse(LocalTransaction ts,
 			ClientResponseImpl cresponse) {
 		LOG.info(String.format("processing client response %s", ts.toString()));
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		// if a replicated transaction, then send acknowledgement
 		// that replication has succeeded
 		LOG.info(String.format("Checking if partition %s is a replica",
