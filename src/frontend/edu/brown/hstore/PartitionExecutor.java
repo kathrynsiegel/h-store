@@ -3139,7 +3139,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 					.getTransactionId());
 			LOG.info("Finished!");
 		} else {
-			LOG.info("is sys proc so ignoring");
+			LOG.info("is sys proc or secondary so ignoring");
 		}
 
 		if (hstore_conf.site.txn_profiling && ts.profiler != null) {
@@ -6483,7 +6483,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 	 */
 	protected void processClientResponse(LocalTransaction ts,
 			ClientResponseImpl cresponse) {
-		LOG.info(String.format("processing client response %s", ts.toString()));
+		LOG.info(String.format("processing client response %s", ts.debug()));
 		// if a replicated transaction, then send acknowledgement
 		// that replication has succeeded
 		LOG.info(String.format("Checking if partition %s is a replica",
