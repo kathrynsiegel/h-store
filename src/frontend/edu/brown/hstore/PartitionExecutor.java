@@ -8378,8 +8378,8 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 	public void replicaLoadTable(AbstractTransaction ts, String clusterName,
 			String databaseName, String tableName, VoltTable data, int allowELT) {
 		final List<Integer> partitionReplicas = this.hstore_site
-				.getPartitionReplicas(ts.getBasePartition());
-		LOG.info(String.format("replica load table method on primary %s", ts.getBasePartition()));
+				.getPartitionReplicas(this.getPartitionId());
+		LOG.info(String.format("replica load table method on primary %s", this.getPartitionId()));
 		// send to each replica via HStoreCoordinator
 		for (int i = 0; i < partitionReplicas.size(); i++) {
 			LocalTransaction tsRep = new LocalTransaction(hstore_site);
