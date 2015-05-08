@@ -1586,8 +1586,7 @@ public class HStoreCoordinator implements Shutdownable {
     			.transactionReplicateFinish(new ProtoRpcController(), request, null);
     }
     
-    public void replicaLoadTable(byte[] serializedRequest, 
-    		RpcCallback<ReplicaLoadTableResponse> replica_callback, int partition, 
+    public void replicaLoadTable(RpcCallback<ReplicaLoadTableResponse> replica_callback, int partition, 
     		long transactionID, String clusterName,
 			String databaseName, String tableName, 
 			VoltTable vt, int allowELT) {
@@ -1596,7 +1595,7 @@ public class HStoreCoordinator implements Shutdownable {
 			throw new NotImplementedException();
 		}
 		if (this.isShuttingDown()) return;
-    	ByteString bs = ByteString.copyFrom(serializedRequest);
+//    	ByteString bs = ByteString.copyFrom(serializedRequest);
     	ByteString bs_vt = null;
         byte bytes[] = null;
         try {
@@ -1608,7 +1607,6 @@ public class HStoreCoordinator implements Shutdownable {
         }
 		ReplicaLoadTableRequest request = ReplicaLoadTableRequest.newBuilder()
     			.setSenderSite(this.local_site_id)
-    			.setWork(bs)
     			.setClusterName(clusterName)
     			.setDatabaseName(databaseName)
     			.setTableName(tableName)

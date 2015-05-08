@@ -1907,7 +1907,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 
 	private void processReplicaLoadTableMessage(ReplicaLoadTableMessage work) {
 		LOG.info("loading data in replica table");
-		this.loadTable(this.hstore_site.getTransaction(work.getTxnId()),
+		this.replicaLoadTable(work.getTxnId(),
                 work.getClusterName(),
                 work.getDatabaseName(),
                 work.getTableName(),
@@ -5029,6 +5029,46 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		this.ee.loadTable(table.getRelativeIndex(), data,
 				ts.getTransactionId(), this.lastCommittedTxnId.longValue(),
 				ts.getLastUndoToken(this.partitionId), allowELT != 0);
+		long timeTaken = System.currentTimeMillis() - start;
+		int loadSizeKB = (data.getRowCount() * data.getRowSize()) / 1000;
+		// this.reconfiguration_stats.trackLoad(partitionId, table.getName(),
+		// data.getRowCount(), loadSizeKB, timeTaken);
+	}
+	
+	/**
+	 * Load a VoltTable directly into the EE at this partition. <B>NOTE:</B>
+	 * This should only be invoked by a system stored procedure.
+	 * 
+	 * @param txn_id
+	 * @param clusterName
+	 * @param databaseName
+	 * @param tableName
+	 * @param data
+	 * @param allowELT
+	 * @throws VoltAbortException
+	 */
+	public void replicaLoadTable(long transactionID, String clusterName,
+			String databaseName, String tableName, VoltTable data, int allowELT)
+			throws VoltAbortException {
+		Table table = this.catalogContext.database.getTables().getIgnoreCase(
+				tableName);
+		if (table == null) {
+			throw new VoltAbortException("Table '" + tableName
+					+ "' does not exist in database " + clusterName + "."
+					+ databaseName);
+		}
+		if (data == null || data.getRowCount() == 0) {
+			return;
+		}
+
+		if (debug.val)
+			LOG.debug(String.format("Loading %d row(s) into %s [txnId=%d]",
+					data.getRowCount(), table.getName(), transactionID));
+//		ts.markExecutedWork(this.partitionId);
+		long start = System.currentTimeMillis();
+		this.ee.loadTable(table.getRelativeIndex(), data,
+				transactionID, this.lastCommittedTxnId.longValue(),
+				-1, allowELT != 0);
 		long timeTaken = System.currentTimeMillis() - start;
 		int loadSizeKB = (data.getRowCount() * data.getRowSize()) / 1000;
 		// this.reconfiguration_stats.trackLoad(partitionId, table.getName(),
@@ -8390,36 +8430,35 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 					LOG.info("replicated log table");
 				}
 			};
-			LOG.info("initializing new load table transaction");
-			tsRep.init(ts.getTransactionId(), System.currentTimeMillis(),
-					ts.getClientHandle(), partitionReplicas.get(i),
-					ts.getPredictTouchedPartitions(), ts.isPredictReadOnly(),
-					ts.isPredictAbortable(), ts.getProcedure(),
-					ts.getProcedureParameters(), ((LocalTransaction)ts).getClientCallback());
-			LOG.info("here");
-			Procedure catalog_proc = tsRep.getProcedure();
-			LOG.info("here");
-			StoredProcedureInvocation spi = new StoredProcedureInvocation(
-					tsRep.getClientHandle(), catalog_proc.getId(),
-					catalog_proc.getName(), tsRep.getProcedureParameters()
-							.toArray());
-			LOG.info("here");
-			spi.setBasePartition(tsRep.getBasePartition());
-			LOG.info("here");
-			spi.setRestartCounter(tsRep.getRestartCounter() + 1);
-			LOG.info("here");
-			try {
-				this.fs.writeObject(spi);
-			} catch (IOException ex) {
-				LOG.info("oops! exception");
-				String msg = "Failed to serialize StoredProcedureInvoca/tion to forward txn to replica";
-				throw new ServerFaultException(msg, ex,
-						tsRep.getTransactionId());
-			}
-			byte[] serializedSpi = this.fs.getBytes();
-			LOG.info("about to call replicaloadtable on primary");
-			this.hstore_coordinator.replicaLoadTable(serializedSpi,
-					replica_callback, tsRep.getBasePartition(),
+//			LOG.info("initializing new load table transaction");
+//			tsRep.init(ts.getTransactionId(), System.currentTimeMillis(),
+//					"", partitionReplicas.get(i),
+//					ts.getPredictTouchedPartitions(), ts.isPredictReadOnly(),
+//					ts.isPredictAbortable(), ts.getProcedure(),
+//					ts.getProcedureParameters(), null);
+//			LOG.info("here");
+//			Procedure catalog_proc = tsRep.getProcedure();
+//			LOG.info("here");
+//			StoredProcedureInvocation spi = new StoredProcedureInvocation(
+//					tsRep.getClientHandle(), catalog_proc.getId(),
+//					catalog_proc.getName(), tsRep.getProcedureParameters()
+//							.toArray());
+//			LOG.info("here");
+//			spi.setBasePartition(tsRep.getBasePartition());
+//			LOG.info("here");
+//			spi.setRestartCounter(tsRep.getRestartCounter() + 1);
+//			LOG.info("here");
+//			try {
+//				this.fs.writeObject(spi);
+//			} catch (IOException ex) {
+//				LOG.info("oops! exception");
+//				String msg = "Failed to serialize StoredProcedureInvoca/tion to forward txn to replica";
+//				throw new ServerFaultException(msg, ex,
+//						tsRep.getTransactionId());
+//			}
+//			byte[] serializedSpi = this.fs.getBytes();
+//			LOG.info("about to call replicaloadtable on primary");
+			this.hstore_coordinator.replicaLoadTable(replica_callback, tsRep.getBasePartition(),
 					tsRep.getTransactionId(), clusterName, databaseName, tableName, data, allowELT);
 		}
 	}

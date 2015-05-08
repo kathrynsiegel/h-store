@@ -391,16 +391,15 @@ message TransactionReplicateFinishResponse {
 
 message ReplicaLoadTableRequest {
 	required int32 sender_site = 1;
-	required bytes work = 2;
-	required string cluster_name = 3;
-	required string database_name = 4;
-	required string table_name = 5;
+	required string cluster_name = 2;
+	required string database_name = 3;
+	required string table_name = 4;
 	// serialized volttable
-	required bytes data = 6;
-	required int32 allow_ELT = 7;
-	required int64 orig_txn_id = 8;
-	required int32 partition = 9;
-	required int64 txn_id = 10;
+	required bytes data = 5;
+	required int32 allow_ELT = 6;
+	required int64 orig_txn_id = 7;
+	required int32 partition = 8;
+	required int64 txn_id = 9;
 }
 
 message ReplicaLoadTableResponse {
