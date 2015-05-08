@@ -8457,7 +8457,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 //						tsRep.getTransactionId());
 //			}
 //			byte[] serializedSpi = this.fs.getBytes();
-//			LOG.info("about to call replicaloadtable on primary");
+			LOG.info("about to call replicaloadtable on primary");
 			this.hstore_coordinator.replicaLoadTable(replica_callback, tsRep.getBasePartition(),
 					tsRep.getTransactionId(), clusterName, databaseName, tableName, data, allowELT);
 		}

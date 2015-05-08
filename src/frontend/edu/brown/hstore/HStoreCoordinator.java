@@ -1614,7 +1614,7 @@ public class HStoreCoordinator implements Shutdownable {
     			.setAllowELT(allowELT)
     			.setOrigTxnId(transactionID)
     			.setPartition(partition).build();
-		LOG.info(String.format("sending out transactionReplicateFinish request for transaction"));
+		LOG.info(String.format("sending out replica load table request for transaction"));
 		this.channels[site].replicaLoadTable(new ProtoRpcController(), request, replica_callback);
     }
     
