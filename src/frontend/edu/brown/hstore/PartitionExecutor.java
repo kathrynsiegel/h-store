@@ -5064,11 +5064,13 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		if (debug.val)
 			LOG.debug(String.format("Loading %d row(s) into %s [txnId=%d]",
 					data.getRowCount(), table.getName(), transactionID));
+		LOG.info(String.format("loading table on replica. rows before: %s", data.getRowCount()));
 //		ts.markExecutedWork(this.partitionId);
 		long start = System.currentTimeMillis();
 		this.ee.loadTable(table.getRelativeIndex(), data,
 				transactionID, this.lastCommittedTxnId.longValue(),
 				-1, allowELT != 0);
+		LOG.info(String.format("loaded table on replica. rows after: %s", data.getRowCount()));
 		long timeTaken = System.currentTimeMillis() - start;
 		int loadSizeKB = (data.getRowCount() * data.getRowSize()) / 1000;
 		// this.reconfiguration_stats.trackLoad(partitionId, table.getName(),
