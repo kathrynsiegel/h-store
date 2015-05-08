@@ -8396,19 +8396,23 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 					ts.getPredictTouchedPartitions(), ts.isPredictReadOnly(),
 					ts.isPredictAbortable(), ts.getProcedure(),
 					ts.getProcedureParameters(), ((LocalTransaction)ts).getClientCallback());
+			LOG.info("here");
 			Procedure catalog_proc = tsRep.getProcedure();
+			LOG.info("here");
 			StoredProcedureInvocation spi = new StoredProcedureInvocation(
 					tsRep.getClientHandle(), catalog_proc.getId(),
 					catalog_proc.getName(), tsRep.getProcedureParameters()
 							.toArray());
+			LOG.info("here");
 			spi.setBasePartition(tsRep.getBasePartition());
+			LOG.info("here");
 			spi.setRestartCounter(tsRep.getRestartCounter() + 1);
 			LOG.info("here");
 			try {
 				this.fs.writeObject(spi);
 			} catch (IOException ex) {
 				LOG.info("oops! exception");
-				String msg = "Failed to serialize StoredProcedureInvocation to forward txn to replica";
+				String msg = "Failed to serialize StoredProcedureInvoca/tion to forward txn to replica";
 				throw new ServerFaultException(msg, ex,
 						tsRep.getTransactionId());
 			}
