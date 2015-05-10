@@ -3096,9 +3096,10 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 			// send to each replica via HStoreCoordinator
 			for (int i = 0; i < partitionReplicas.size(); i++) {
 				LocalTransaction tsRep = new LocalTransaction(hstore_site);
+				Integer[] touchedPartitions = {partitionReplicas.get(i)};
 				tsRep.init(ts.getTransactionId(), System.currentTimeMillis(),
 						ts.getClientHandle(), partitionReplicas.get(i),
-						ts.getPredictTouchedPartitions(),
+						new PartitionSet(touchedPartitions),
 						ts.isPredictReadOnly(), ts.isPredictAbortable(),
 						ts.getProcedure(), ts.getProcedureParameters(),
 						ts.getClientCallback()); // TODO maybe fix?
