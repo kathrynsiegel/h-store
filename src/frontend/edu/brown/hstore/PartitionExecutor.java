@@ -5283,31 +5283,34 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		// Doing it this way allows us to update the TransactionEstimator before
 		// we abort the txn
 		if (plan.getMisprediction() != null) {
-			MispredictionException ex = plan.getMisprediction();
-			ts.setPendingError(ex, false);
-			assert (ex.getPartitions().isEmpty() == false) : "Unexpected empty PartitionSet for mispredicated txn "
-					+ ts;
-
-			// Print Misprediction Debug
-			if (hstore_conf.site.exec_mispredict_crash) {
-				// Use a lock so that only dump out the first txn that fails
-				synchronized (PartitionExecutor.class) {
-					LOG.warn("\n"
-							+ EstimatorUtil.mispredictDebug(ts, planner,
-									batchStmts, batchParams));
-					LOG.fatal(String
-							.format("Crashing because site.exec_mispredict_crash is true [txn=%s]",
-									ts));
-					this.crash(ex);
-				} // SYNCH
-			} else if (debug.val) {
-				if (trace.val)
-					LOG.warn("\n"
-							+ EstimatorUtil.mispredictDebug(ts, planner,
-									batchStmts, batchParams));
-				LOG.debug(ts + " - Aborting and restarting mispredicted txn.");
+			LOG.info("whoops, there has been a misprediction");
+			if (this.hstore_site.isPrimaryPartition(this.partitionId)) {
+				MispredictionException ex = plan.getMisprediction();
+				ts.setPendingError(ex, false);
+				assert (ex.getPartitions().isEmpty() == false) : "Unexpected empty PartitionSet for mispredicated txn "
+						+ ts;
+	
+				// Print Misprediction Debug
+				if (hstore_conf.site.exec_mispredict_crash) {
+					// Use a lock so that only dump out the first txn that fails
+					synchronized (PartitionExecutor.class) {
+						LOG.warn("\n"
+								+ EstimatorUtil.mispredictDebug(ts, planner,
+										batchStmts, batchParams));
+						LOG.fatal(String
+								.format("Crashing because site.exec_mispredict_crash is true [txn=%s]",
+										ts));
+						this.crash(ex);
+					} // SYNCH
+				} else if (debug.val) {
+					if (trace.val)
+						LOG.warn("\n"
+								+ EstimatorUtil.mispredictDebug(ts, planner,
+										batchStmts, batchParams));
+					LOG.debug(ts + " - Aborting and restarting mispredicted txn.");
+				}
+				throw ex;
 			}
-			throw ex;
 		}
 
 		// Keep track of the number of times that we've executed each query for
