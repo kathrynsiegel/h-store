@@ -6130,7 +6130,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 						LOG.debug(String.format(
 								"%s - Got unblocked %s to execute locally", ts,
 								fragmentBuilder.getClass().getSimpleName()));
-					if (!this.hstore_site.isPrimaryPartition(this.partitionId)) {
+					if (this.hstore_site.isPrimaryPartition(this.partitionId)) {
 						assert (fragmentBuilder.getPartitionId() == this.partitionId) : String
 								.format("Trying to process %s for %s on partition %d but it should have been "
 										+ "sent to partition %d [singlePartition=%s]\n%s",
