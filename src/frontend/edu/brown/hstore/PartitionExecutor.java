@@ -3096,20 +3096,21 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 			// send to each replica via HStoreCoordinator
 			for (int i = 0; i < partitionReplicas.size(); i++) {
 				LocalTransaction tsRep = new LocalTransaction(hstore_site);
-				Integer[] touchedPartitions = {partitionReplicas.get(i)};
+				Integer[] predictTouchedPartitions = {partitionReplicas.get(i)};
 				tsRep.init(ts.getTransactionId(), System.currentTimeMillis(),
 						ts.getClientHandle(), partitionReplicas.get(i),
-						new PartitionSet(touchedPartitions),
+						new PartitionSet(predictTouchedPartitions),
 						ts.isPredictReadOnly(), ts.isPredictAbortable(),
 						ts.getProcedure(), ts.getProcedureParameters(),
-						ts.getClientCallback()); // TODO maybe fix?
+						ts.getClientCallback());
+				tsRep.getTouchedPartitions().clear();
 				Procedure catalog_proc = tsRep.getProcedure();
 				StoredProcedureInvocation spi = new StoredProcedureInvocation(
 						tsRep.getClientHandle(), catalog_proc.getId(),
 						catalog_proc.getName(), tsRep.getProcedureParameters()
 								.toArray());
 				spi.setBasePartition(tsRep.getBasePartition());
-				spi.setRestartCounter(tsRep.getRestartCounter() + 1);
+				spi.setRestartCounter(0);
 				try {
 					this.fs.writeObject(spi);
 				} catch (IOException ex) {
