@@ -5244,7 +5244,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		// local executor or to Evan's magical distributed transaction manager
 		BatchPlanner.BatchPlan plan = planner.plan(ts.getTransactionId(),
 				this.partitionId, ts.getPredictTouchedPartitions(),
-				ts.getTouchedPartitions(), batchParams);
+				ts.getTouchedPartitions(), batchParams, XX-CHANGE-THIS-IF-secondanry-and-replication);
 		assert (plan != null);
 
 		// EStore++ - monitoring of tables and partitioning attribute values
