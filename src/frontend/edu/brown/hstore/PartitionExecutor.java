@@ -3411,7 +3411,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 			assert (ts.isMarkedPrepared(this.partitionId) == false) : String
 					.format("Tried to execute WorkFragment %s for %s at partition %d after it was marked 2PC:PREPARE",
 							fragment.getFragmentIdList(), ts, this.partitionId);
-		}
+		} 
 
 		// A txn is "local" if the Java is executing at the same partition as
 		// this one
@@ -6926,7 +6926,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		// there is nothing that we need to do, except to check to make sure we
 		// aren't
 		// trying to abort this txn
-		if (undoToken == HStoreConstants.DISABLE_UNDO_LOGGING_TOKEN) {
+		if (undoToken == HStoreConstants.DISABLE_UNDO_LOGGING_TOKEN && this.hstore_site.isPrimaryPartition(this.partitionId)) {
 			// SANITY CHECK: Make sure that they're not trying to undo a
 			// transaction that
 			// modified the database but did not use undo logging
