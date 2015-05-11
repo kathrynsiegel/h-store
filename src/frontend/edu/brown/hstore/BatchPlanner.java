@@ -967,8 +967,7 @@ public class BatchPlanner {
         // at the plan first
         if (mispredict_h != null) {
             plan.mispredict = new MispredictionException(txn_id, mispredict_h);
-            if (debug.val)
-                LOG.warn(String.format("Created %s for txn #%d\n%s",
+            LOG.warn(String.format("Created %s for txn #%d\n%s",
                          plan.mispredict.getClass().getSimpleName(), txn_id,
                          plan.mispredict.getPartitions()));
         }

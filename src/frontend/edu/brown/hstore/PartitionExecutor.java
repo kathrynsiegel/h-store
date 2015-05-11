@@ -6634,7 +6634,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		// COMMIT: Distributed Transaction
 		// -------------------------------
 		else if (status == Status.OK) {
-			LOG.info("is a distributed transaction");
+			LOG.info("is a distributed transaction " + ts.getTransactionId().toString());
 			// We need to set the new ExecutionMode before we invoke
 			// transactionPrepare
 			// because the LocalTransaction handle might get cleaned up
