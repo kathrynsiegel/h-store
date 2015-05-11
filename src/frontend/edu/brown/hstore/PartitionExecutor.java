@@ -3078,7 +3078,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		// REPLICATE
 		// -------------------------
 		int basePartition = ts.getBasePartition();
-		if (!ts.isSysProc() && this.hstore_site.isPrimaryPartition(basePartition)) {
+		if (!ts.isSysProc() && this.hstore_site.isPrimaryPartition(basePartition) && !ts.isPredictReadOnly()) {
 			final List<Integer> partitionReplicas = this.hstore_site
 					.getPartitionReplicas(basePartition);
 			LOG.info(String.format("replicating from partition %s",
