@@ -3402,14 +3402,16 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 	 */
 	private void processWorkFragment(AbstractTransaction ts,
 			WorkFragment fragment, ParameterSet allParameters[]) {
-		assert (this.partitionId == fragment.getPartitionId()) : String.format(
-				"Tried to execute WorkFragment %s for %s at partition %d but it was suppose "
-						+ "to be executed on partition %d",
-				fragment.getFragmentIdList(), ts, this.partitionId,
-				fragment.getPartitionId());
-		assert (ts.isMarkedPrepared(this.partitionId) == false) : String
-				.format("Tried to execute WorkFragment %s for %s at partition %d after it was marked 2PC:PREPARE",
-						fragment.getFragmentIdList(), ts, this.partitionId);
+		if (this.hstore_site.isPrimaryPartition(this.partitionId)) {
+			assert (this.partitionId == fragment.getPartitionId()) : String.format(
+					"Tried to execute WorkFragment %s for %s at partition %d but it was suppose "
+							+ "to be executed on partition %d",
+					fragment.getFragmentIdList(), ts, this.partitionId,
+					fragment.getPartitionId());
+			assert (ts.isMarkedPrepared(this.partitionId) == false) : String
+					.format("Tried to execute WorkFragment %s for %s at partition %d after it was marked 2PC:PREPARE",
+							fragment.getFragmentIdList(), ts, this.partitionId);
+		}
 
 		// A txn is "local" if the Java is executing at the same partition as
 		// this one
