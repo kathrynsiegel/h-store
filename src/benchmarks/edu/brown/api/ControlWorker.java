@@ -124,6 +124,8 @@ class ControlWorker extends Thread {
                         if (bp || cmp.m_controlState != ControlState.RUNNING) {
                             break;
                         }
+                        LOG.warn("TODO quitting after one");
+                        break;
                     } // FOR
                 } catch (final IOException e) {
                     if (hadErrors) return;
