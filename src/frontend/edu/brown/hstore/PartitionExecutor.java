@@ -6135,7 +6135,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 						LOG.debug(String.format(
 								"%s - Got unblocked %s to execute locally", ts,
 								fragmentBuilder.getClass().getSimpleName()));
-					if (this.hstore_site.isPrimaryPartition(this.partitionId)) {
+//					if (this.hstore_site.isPrimaryPartition(this.partitionId)) {
 						assert (fragmentBuilder.getPartitionId() == this.partitionId) : String
 								.format("Trying to process %s for %s on partition %d but it should have been "
 										+ "sent to partition %d [singlePartition=%s]\n%s",
@@ -6143,7 +6143,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 										ts, this.partitionId,
 										fragmentBuilder.getPartitionId(),
 										predict_singlePartition, fragmentBuilder);
-					}
+//					}
 					WorkFragment fragment = fragmentBuilder.build();
 					this.processWorkFragment(ts, fragment, batchParams);
 					
@@ -6933,7 +6933,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 			// SANITY CHECK: Make sure that they're not trying to undo a
 			// transaction that
 			// modified the database but did not use undo logging
-			if (ts.isExecReadOnly(this.partitionId) == false && commit == false && this.hstore_site.isPrimaryPartition(this.partitionId)) {
+			if (ts.isExecReadOnly(this.partitionId) == false && commit == false) {
 				String msg = String
 						.format("TRYING TO ABORT TRANSACTION ON PARTITION %d WITHOUT UNDO LOGGING [undoToken=%d]",
 								this.partitionId, undoToken);
