@@ -5242,9 +5242,16 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		// for this batch. So somehow right now we need to fire this off to
 		// either our
 		// local executor or to Evan's magical distributed transaction manager
-		BatchPlanner.BatchPlan plan = planner.plan(ts.getTransactionId(),
+		BatchPlanner.BatchPlan plan;
+		if (!(ts.getClientCallback() instanceof TransactionForwardToReplicaResponseCallback)) {
+			plan = planner.plan(ts.getTransactionId(),
 				this.partitionId, ts.getPredictTouchedPartitions(),
-				ts.getTouchedPartitions(), batchParams, XX-CHANGE-THIS-IF-secondanry-and-replication);
+				ts.getTouchedPartitions(), batchParams);
+		} else {
+			plan = planner.plan(ts.getTransactionId(),
+					this.partitionId, ts.getPredictTouchedPartitions(),
+					ts.getTouchedPartitions(), batchParams, this.partitionId);
+		}
 		assert (plan != null);
 
 		// EStore++ - monitoring of tables and partitioning attribute values
