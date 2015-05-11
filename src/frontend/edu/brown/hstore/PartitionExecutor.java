@@ -3133,7 +3133,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 						catalog_proc.getName(), ts.getProcedureParameters()
 								.toArray());
 				spi.setBasePartition(partitionReplicas.get(i));
-				spi.setRestartCounter(0);
+				spi.setRestartCounter(ts.getRestartCounter());
 				try {
 					this.fs.writeObject(spi);
 				} catch (IOException ex) {
