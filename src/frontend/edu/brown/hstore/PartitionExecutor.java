@@ -3095,33 +3095,53 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 
 			// send to each replica via HStoreCoordinator
 			for (int i = 0; i < partitionReplicas.size(); i++) {
-				LocalTransaction tsRep = new LocalTransaction(hstore_site);
-				Integer[] touchedPartitions = {partitionReplicas.get(i)};
-				tsRep.init(ts.getTransactionId(), System.currentTimeMillis(),
-						ts.getClientHandle(), partitionReplicas.get(i),
-						new PartitionSet(touchedPartitions),
-						ts.isPredictReadOnly(), ts.isPredictAbortable(),
-						ts.getProcedure(), ts.getProcedureParameters(),
-						ts.getClientCallback()); // TODO maybe fix?
-				Procedure catalog_proc = tsRep.getProcedure();
+//				LocalTransaction tsRep = new LocalTransaction(hstore_site);
+//				Integer[] touchedPartitions = {partitionReplicas.get(i)};
+//				tsRep.init(ts.getTransactionId(), System.currentTimeMillis(),
+//						ts.getClientHandle(), partitionReplicas.get(i),
+//						new PartitionSet(touchedPartitions),
+//						ts.isPredictReadOnly(), ts.isPredictAbortable(),
+//						ts.getProcedure(), ts.getProcedureParameters(),
+//						ts.getClientCallback()); // TODO maybe fix?
+//				Procedure catalog_proc = tsRep.getProcedure();
+//				StoredProcedureInvocation spi = new StoredProcedureInvocation(
+//						tsRep.getClientHandle(), catalog_proc.getId(),
+//						catalog_proc.getName(), tsRep.getProcedureParameters()
+//								.toArray());
+//				spi.setBasePartition(tsRep.getBasePartition());
+//				spi.setRestartCounter(tsRep.getRestartCounter() + 1);
+//				try {
+//					this.fs.writeObject(spi);
+//				} catch (IOException ex) {
+//					String msg = "Failed to serialize StoredProcedureInvocation to forward txn to replica";
+//					throw new ServerFaultException(msg, ex,
+//							tsRep.getTransactionId());
+//				}
+//				byte[] serializedSpi = this.fs.getBytes();
+//				LOG.info(String.format("sending transaction %s to replica", tsRep.getTransactionId()));
+//				this.hstore_coordinator.transactionReplicate(serializedSpi,
+//						replica_callback, tsRep.getBasePartition(),
+//						tsRep.getTransactionId());
+				
+				Procedure catalog_proc = ts.getProcedure();
 				StoredProcedureInvocation spi = new StoredProcedureInvocation(
-						tsRep.getClientHandle(), catalog_proc.getId(),
-						catalog_proc.getName(), tsRep.getProcedureParameters()
+						ts.getClientHandle(), catalog_proc.getId(),
+						catalog_proc.getName(), ts.getProcedureParameters()
 								.toArray());
-				spi.setBasePartition(tsRep.getBasePartition());
-				spi.setRestartCounter(tsRep.getRestartCounter() + 1);
+				spi.setBasePartition(partitionReplicas.get(i));
+				spi.setRestartCounter(ts.getRestartCounter());
 				try {
 					this.fs.writeObject(spi);
 				} catch (IOException ex) {
 					String msg = "Failed to serialize StoredProcedureInvocation to forward txn to replica";
 					throw new ServerFaultException(msg, ex,
-							tsRep.getTransactionId());
+							ts.getTransactionId());
 				}
 				byte[] serializedSpi = this.fs.getBytes();
-				LOG.info(String.format("sending transaction %s to replica", tsRep.getTransactionId()));
+				LOG.info(String.format("sending transaction %s to replica", ts.getTransactionId()));
 				this.hstore_coordinator.transactionReplicate(serializedSpi,
-						replica_callback, tsRep.getBasePartition(),
-						tsRep.getTransactionId());
+						replica_callback, partitionReplicas.get(i),
+						ts.getTransactionId());
 			}
 
 			LOG.info(String.format(
