@@ -3103,7 +3103,8 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 						ts.isPredictReadOnly(), ts.isPredictAbortable(),
 						ts.getProcedure(), ts.getProcedureParameters(),
 						ts.getClientCallback());
-				tsRep.getTouchedPartitions().clear();
+				tsRep.getTouchedPartitions().clearValues();
+				LOG.info(String.format("exec touched partitions: %s", tsRep.getTouchedPartitions().toString()));
 				Procedure catalog_proc = tsRep.getProcedure();
 				StoredProcedureInvocation spi = new StoredProcedureInvocation(
 						tsRep.getClientHandle(), catalog_proc.getId(),
