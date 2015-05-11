@@ -3660,8 +3660,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 										Arrays.toString(outputDepIds),
 										Arrays.toString(result.depIds),
 										fragment));
-						if (this.hstore_site.isPrimaryPartition(this.partitionId))
-							throw new ServerFaultException(msg, ex);
+						throw new ServerFaultException(msg, ex);
 					}
 				} // FOR
 			} else {
