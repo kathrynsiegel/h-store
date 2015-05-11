@@ -6509,7 +6509,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		// that replication has succeeded
 		LOG.info(String.format("Checking if partition %s is a replica",
 				this.partitionId));
-		if (!ts.isSysProc() && this.hstore_site.getPartitionReplicas(this.partitionId) == null) {
+		if (!ts.isSysProc() && !this.hstore_site.isPrimaryPartition(this.partitionId)) {
 			LOG.info("acknowledging the finished replication");
 			Map<Integer, List<Integer>> partitionReplicas = this.hstore_site
 					.getPartitionReplicasMap();
