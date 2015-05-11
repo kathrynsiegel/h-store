@@ -197,6 +197,7 @@ public final class Hstoreservice {
     private int partitionId_ = 0;
     public boolean hasPartitionId() { return hasPartitionId; }
     public int getPartitionId() { return partitionId_; }
+    public void setPartitionId(int id) { this.partitionId_ = id; }
     
     // repeated int32 fragment_id = 2 [packed = true];
     public static final int FRAGMENT_ID_FIELD_NUMBER = 2;

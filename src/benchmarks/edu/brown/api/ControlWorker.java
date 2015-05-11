@@ -127,6 +127,7 @@ class ControlWorker extends Thread {
                         LOG.warn("TODO quitting after one");
                         break;
                     } // FOR
+                    break;
                 } catch (final IOException e) {
                     if (hadErrors) return;
                     hadErrors = true;

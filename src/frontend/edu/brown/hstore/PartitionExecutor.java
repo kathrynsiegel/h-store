@@ -3411,7 +3411,10 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 			assert (ts.isMarkedPrepared(this.partitionId) == false) : String
 					.format("Tried to execute WorkFragment %s for %s at partition %d after it was marked 2PC:PREPARE",
 							fragment.getFragmentIdList(), ts, this.partitionId);
-		} 
+		} else {
+			fragment.setPartitionId(this.partitionId);
+		}
+		
 
 		// A txn is "local" if the Java is executing at the same partition as
 		// this one
@@ -3660,9 +3663,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 										Arrays.toString(outputDepIds),
 										Arrays.toString(result.depIds),
 										fragment));
-						if (this.hstore_site.isPrimaryPartition(this.partitionId)) {
-							throw new ServerFaultException(msg, ex);
-						}
+						throw new ServerFaultException(msg, ex);
 					}
 				} // FOR
 			} else {
