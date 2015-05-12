@@ -1522,8 +1522,8 @@ public class HStoreCoordinator implements Shutdownable {
     // ----------------------------------------------------------------------------
     public void transactionReplicate(byte[] serializedRequest, 
     		RpcCallback<TransactionForwardToReplicaResponse> replica_callback, 
-    		int partition, long transactionID) {    	
-    	int site = catalogContext.getSiteIdForPartitionId(partition);
+    		int originalPartition, int replicaPartition, long transactionID) {    	
+    	int site = catalogContext.getSiteIdForPartitionId(replicaPartition);
     	if (site == this.local_site_id) {
 			throw new NotImplementedException();
 		}
@@ -1534,7 +1534,7 @@ public class HStoreCoordinator implements Shutdownable {
 					.setSenderSite(this.local_site_id)
 					.setOrigTxnId(transactionID)
 					.setWork(bs)
-					.setPrimaryPartition(partition)
+					.setPrimaryPartition(originalPartition)
 					.build();
 			this.channels[site].transactionForwardToReplica(new ProtoRpcController(), request, replica_callback);
 		} catch (RuntimeException ex) {
