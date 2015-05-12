@@ -728,6 +728,7 @@ public class HStoreCoordinator implements Shutdownable {
             
             ReplicationType replicationType = ReplicationType.get(hstore_conf.site.replication_protocol);
     		if (replicationType != null && replicationType == ReplicationType.SEMI) {
+    			LOG.info(String.format("semisync finish: %s %s", callback.getOrigTxnId(), request.getPrimaryPartition()));
     			HStoreCoordinator.this.transactionReplicateFinish(callback.getOrigTxnId(), request.getPrimaryPartition());
     		}
             
