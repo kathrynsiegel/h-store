@@ -3126,8 +3126,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 				Procedure catalog_proc = ts.getProcedure();
 				StoredProcedureInvocation spi = new StoredProcedureInvocation(
 						ts.getClientHandle(), catalog_proc.getId(),
-						catalog_proc.getName(), ts.getProcedureParameters()
-								.toArray());
+						catalog_proc.getName(), ts.getProcedureParameters());
 				spi.setBasePartition(partitionReplicas.get(i));
 				spi.setRestartCounter(ts.getRestartCounter());
 				try {
@@ -3140,11 +3139,13 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 				byte[] serializedSpi = this.fs.getBytes();
 				LOG.info(String.format("sending transaction %s to replica", ts.getTransactionId()));
 				
-				final FastDeserializer incomingDeserializer = new FastDeserializer();
-				ParameterSet procParams = new ParameterSet();
+				ByteString bs1 = ByteString.copyFrom(serializedSpi);
+		    	ByteBuffer serializedRequest1 = bs1.asReadOnlyByteBuffer();
+		        final FastDeserializer incomingDeserializer = new FastDeserializer();
+		    	ParameterSet procParams = new ParameterSet();
 		        try {
-		            StoredProcedureInvocation.seekToParameterSet(ByteString.copyFrom(serializedSpi).asReadOnlyByteBuffer());
-		            incomingDeserializer.setBuffer(ByteString.copyFrom(serializedSpi).asReadOnlyByteBuffer());
+		            StoredProcedureInvocation.seekToParameterSet(serializedRequest1);
+		            incomingDeserializer.setBuffer(serializedRequest1);
 		            procParams.readExternal(incomingDeserializer);
 		        } catch (Exception ex) {
 		            throw new RuntimeException(ex);
