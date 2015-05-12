@@ -1556,7 +1556,7 @@ public class HStoreCoordinator implements Shutdownable {
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         } 
-        LOG.info(String.format("123here are the actual procparams: ", procParams));
+        LOG.info(String.format("123here are the actual procparams: %s", procParams));
     	
     	
     	
