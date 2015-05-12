@@ -131,7 +131,15 @@ public final class HStoreConf {
         )
         public boolean nanosecond_latencies;
 
+        @ConfigProperty(
+            description="Enable reconfiguration feature.",
+            defaultBoolean=true,
+            experimental=true
+        )
+        public boolean reconfiguration_enable;
     }
+    
+
     
     // ============================================================================
     // SITE
@@ -473,11 +481,11 @@ public final class HStoreConf {
         @ConfigProperty(
             description="This controls what conflict detection algorithm the SpecExecScheduler will use " +
             		    "to use at run time to decide what transactions to run speculatively.",
-            defaultString="TABLE",
+            defaultString="NONE",
             experimental=false,
-            enumOptions="org.voltdb.types.SpeculationConflictCheckerType"
+            enumOptions="edu.brown.hstore.replication.ReplicationType"
         )
-        public String specexec_scheduler_checker;
+        public String replication_protocol;
         
         @ConfigProperty(
             description="Speculative policy to pick the transactions to run speculatively. ",
@@ -711,6 +719,137 @@ public final class HStoreConf {
                 experimental=true
         )
         public String anticache_eviction_distribution;
+        
+        // ----------------------------------------------------------------------------
+        // Reconfiguration Options
+        // ----------------------------------------------------------------------------
+                
+        
+        @ConfigProperty(
+                description="Enable reconfiguration profiling.",
+                defaultBoolean=true,
+                experimental=true
+        )
+        public boolean reconfig_profiling;
+        
+        @ConfigProperty(
+                description="Enable detailed reconfiguration profiling.",
+                defaultBoolean=true,
+                experimental=true
+        )
+        public boolean reconfig_detailed_profiling;
+     
+        @ConfigProperty(
+                description="Have livepull reconfiguration schedule all chunking asynchronous pull of migrating data items.",
+                defaultBoolean=true,
+                experimental=true
+        )
+        public boolean reconfig_async_pull;
+        
+        @ConfigProperty(
+                description="Have livepull reconfiguration use nonchunking asynchronous pull of migrating data items.",
+                defaultBoolean=false,
+                experimental=true
+        )
+        public boolean reconfig_async_nonchunk_pull;
+        
+        @ConfigProperty(
+                description="Have livepull reconfiguration use nonchunking asynchronous push of migrating data items."
+                        + "If set with async pull, pull will override and be used.",
+                defaultBoolean=false,
+                experimental=true
+        )
+        public boolean reconfig_async_nonchunk_push;
+        
+        @ConfigProperty(
+                description="Use async reconfiguration.",
+                defaultBoolean=true,
+                experimental=true
+        )
+        public boolean reconfig_async;
+   
+        @ConfigProperty(
+                description="Use live reconfiguration.",
+                defaultBoolean=true,
+                experimental=true
+        )
+        public boolean reconfig_live;
+        
+        @ConfigProperty(
+                description="The default reconfig plan ID to use. If not set use the first one found. ",
+                defaultNull=true,
+                experimental=true
+        )
+        public String reconfig_initial_plan;
+        
+        @ConfigProperty(
+                description="The introduce delay to inject replication latency into reconfiguraiton. ",
+                defaultBoolean=false,
+                experimental=true
+        )
+        public boolean reconfig_replication_delay;
+        
+        @ConfigProperty(
+                description="The introduce delay to inject replication latency into reconfiguraiton. ",
+                defaultLong=1000,
+                experimental=true
+        )
+        public long reconfig_plan_delay;        
+        
+        
+        @ConfigProperty(
+                description="The amount of  delay to between async pulls. ",
+                defaultLong=100,
+                experimental=true
+        )
+        public long reconfig_async_delay_ms;
+
+        @ConfigProperty(
+                description="The default live chunk size for reconfiguration ",
+                defaultInt=4000,
+                experimental=true
+        )
+        public int reconfig_chunk_size_kb;
+        
+        @ConfigProperty(
+                description="The default async chunk size for reconfiguration ",
+                defaultInt=2048,
+                experimental=true
+        )
+        public int reconfig_async_chunk_size_kb;
+        
+        @ConfigProperty(
+                description="How many subplans should a reconfiguration be split into.",
+                defaultInt=1,
+                experimental=true
+        )
+        public int reconfig_subplan_split;
+        
+        @ConfigProperty(
+                description="Min transfer size for reconfiguration (used to merge chunks/ranges). To disable merging, set to <= 1",
+                defaultInt=0,
+                experimental=true
+        )
+        public int reconfig_min_transfer_bytes;
+        
+        @ConfigProperty(
+                description="Max transfer size for reconfiguration (used to split chunks/ranges)",
+                defaultInt=1024*1024*9,
+                experimental=true
+        )
+        public int reconfig_max_transfer_bytes;
+        
+        //-----------------------------
+        // Replication 
+        // --------------------------------
+        @ConfigProperty(
+                description="This controls what conflict detection algorithm the SpecExecScheduler will use " +
+                            "to use at run time to decide what transactions to run speculatively.",
+                defaultString="TABLE",
+                experimental=false,
+                enumOptions="org.voltdb.types.SpeculationConflictCheckerType"
+            )
+            public String specexec_scheduler_checker;
         
         // ----------------------------------------------------------------------------
         // Storage Options
@@ -1293,8 +1432,18 @@ public final class HStoreConf {
             experimental=false
         )
         public int pool_pathestimators_idle;
+
+        // ----------------------------------------------------------------------------
+        // EStore++
+        // ----------------------------------------------------------------------------
         
-    }
+        @ConfigProperty(
+                description="Tracks the partitioning key values accessed by H-Store.",
+                defaultBoolean=false,
+                experimental=true
+        )
+        public boolean access_tracking;
+}
     
     // ============================================================================
     // CLIENT
@@ -1571,7 +1720,7 @@ public final class HStoreConf {
                         "that has that partition. Note that the HStoreSite will not use the PartitionEstimator to " +
                         "determine whether the client is correct, but the transaction can be restarted and re-executed " +
                         "if ${site.exec_db2_redirects} is enabled.",
-            defaultBoolean=true,
+            defaultBoolean=false,
             experimental=false
         )
         public boolean txn_hints;
@@ -2321,11 +2470,27 @@ public final class HStoreConf {
             Object value = null;
             
             if (f_class.equals(int.class)) {
-                value = this.config.getInt(k, (Integer)defaultValue);
+                try {
+                 value = this.config.getInt(k, (Integer)defaultValue);
+                } catch (NumberFormatException ex) {
+                    LOG.info("Number format exception. Using default. Original value : " + k );
+                    value = (Integer)defaultValue;
+                }
+                
             } else if (f_class.equals(long.class)) {
-                value = this.config.getLong(k, (Long)defaultValue);
+                try { 
+                    value = this.config.getLong(k, (Long)defaultValue);
+                } catch (NumberFormatException ex) {
+                    LOG.info("Number format exception. Using default. Original value : " + k );
+                    value = (Long)defaultValue;
+                }
             } else if (f_class.equals(double.class)) {
-                value = this.config.getDouble(k, (Double)defaultValue);
+                try {
+                    value = this.config.getDouble(k, (Double)defaultValue);
+                } catch (NumberFormatException ex) {
+                    LOG.info("Number format exception. Using default. Original value : " + k );
+                    value = (Double)defaultValue;
+                }
             } else if (f_class.equals(boolean.class)) {
                 value = this.config.getBoolean(k, (Boolean)defaultValue);
             } else if (f_class.equals(String.class)) {

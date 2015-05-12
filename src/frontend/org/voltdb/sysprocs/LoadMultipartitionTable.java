@@ -37,6 +37,7 @@ import org.voltdb.exceptions.MispredictionException;
 import edu.brown.catalog.CatalogUtil;
 import edu.brown.hstore.HStoreConstants;
 import edu.brown.hstore.PartitionExecutor.SystemProcedureExecutionContext;
+import edu.brown.hstore.replication.ReplicationType;
 import edu.brown.hstore.txns.AbstractTransaction;
 import edu.brown.hstore.txns.LocalTransaction;
 import edu.brown.logging.LoggerUtil;
@@ -76,7 +77,8 @@ public class LoadMultipartitionTable extends VoltSystemProcedure {
                                              ParameterSet params,
                                              SystemProcedureExecutionContext context) {
         
-        // need to return something ..
+        LOG.info(String.format("executing plan fragment %s", fragmentId));
+    	// need to return something ..
         VoltTable[] result = new VoltTable[1];
         result[0] = new VoltTable(new VoltTable.ColumnInfo("TxnId", VoltType.BIGINT));
         result[0].addRow(txn_id);
@@ -95,11 +97,26 @@ public class LoadMultipartitionTable extends VoltSystemProcedure {
                                        table.getRowCount(), table_name, txn_id));
             assert(this.isInitialized()) : " The sysproc " + this.getClass().getSimpleName() + " was not initialized properly";
             try {
-                AbstractTransaction ts = this.hstore_site.getTransaction(txn_id); 
-                this.executor.loadTable(ts,
-                                        context.getCluster().getName(),
-                                        context.getDatabase().getName(),
-                                        table_name, table, 0);    
+                AbstractTransaction ts = this.hstore_site.getTransaction(txn_id);
+                ReplicationType replicationType = ReplicationType.get(hstore_conf.site.replication_protocol);
+                if(replicationType != null && replicationType != ReplicationType.NONE){
+	                if (this.hstore_site.isPrimaryPartition(this.executor.getPartitionId())) { // only carry out this txn if a primary
+	                	this.executor.loadTable(ts,
+	                                        context.getCluster().getName(),
+	                                        context.getDatabase().getName(),
+	                                        table_name, table, 0);   
+	                	// forward to replicas
+	                	this.executor.replicaLoadTable(ts,
+	                			context.getCluster().getName(),
+	                            context.getDatabase().getName(),
+	                            table_name, table, 0);
+	                }
+                } else {
+                	this.executor.loadTable(ts,
+                            context.getCluster().getName(),
+                            context.getDatabase().getName(),
+                            table_name, table, 0); 
+                }
             } catch (VoltAbortException e) {
                 // must continue and reply with dependency.
                 e.printStackTrace();

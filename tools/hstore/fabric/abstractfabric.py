@@ -39,6 +39,7 @@ import string
 from datetime import datetime
 from StringIO import StringIO
 from pprint import pformat
+from threading import Thread
 
 ## H-Store Third-Party Libraries
 realpath = os.path.realpath(__file__)
@@ -68,9 +69,10 @@ LOG.setLevel(logging.INFO)
 ## DEPLOYMENT CONFIGURATION
 ## =====================================================================
 
+LOG.warn("Removed hstore.pem config")
 ENV_DEFAULT = {
     # Fabric Options
-    "key_filename":                     os.path.join(os.environ["HOME"], ".ssh/hstore.pem"),
+    #"key_filename":                     os.path.join(os.environ["HOME"], ".ssh/hstore.pem"),
     "user":                             os.environ["USER"],
     "disable_known_hosts":              True,
     "no_agent":                         True,
@@ -194,14 +196,42 @@ class AbstractFabric(object):
         return sio.getvalue()
     ## DEF
 
+    #Cleanup Remote File
+    def cleanup_file(self, inst, filePath):
+      """Clean up the file from the cluster for the given path"""
+      
+      with settings(host_string=inst.public_dns_name):
+        run("touch %s" % filePath)
+        if run("rm '%s'" % filePath).failed:
+            LOG.info("Failed to clean up the remote file %s for instance %s" % (filePath, inst))
+      return 
+
+     #Touch Remote File
+    def touch_file(self, inst, filePath):
+      """Touch the file from the cluster for the given path"""
+      
+      with settings(host_string=inst.public_dns_name):
+        run("touch %s" % filePath)
+      return
+ 
     ## ---------------------------------------------------------------------
     ## INTERNAL API
     ## ---------------------------------------------------------------------
-    
+    def exec_reconfigs(self, inst, reconfigEvents, project):
+        LOG.info("****  Starting Reconfigs")
+        for reconfig in reconfigEvents:
+            time.sleep(float(reconfig['delayTimeMS'])/1000)
+            cmd = "ant hstore-invoke -Dproc='@ReconfigurationStatic' -Dproject=%s -Dparam0=%s -Dparam1=%s -Dparam2=%s" % (project, reconfig['leaderID'], reconfig['planID'], reconfig['reconfigType'])
+            LOG.info("**** %s " % cmd)
+            run("touch hereIam.txt")
+            output = run(cmd, combine_stderr=True)
+            LOG.info("**** %s " % output)
+            
+
     def exec_benchmark(self, inst, project, \
                              removals=[ ], json=False, build=True, trace=False, \
                              updateJar=True, updateConf=True, updateRepo=False, resetLog4j=False, \
-                             extraParams={ } ):
+                             extraParams={ }, reconfigEvents = [], affinityEvents= [] ):
         ## Make sure we have enough instances
         if (self.hostCount + self.clientCount) > len(self.running_instances):
             raise Exception("Needed %d host + %d client instances but only %d are currently running" % (\
@@ -283,6 +313,14 @@ class AbstractFabric(object):
         if extraParams:
             hstore_options = dict(hstore_options.items() + extraParams.items())
         
+        '''
+        if reconfigEvents:
+            LOG.info("Reconfig events : %s" % reconfigEvents)
+            t = Thread(target=self.exec_reconfigs, args=(inst, reconfigEvents, project))
+            t.setDaemon(True)
+            t.start()
+        '''
+      
         ## Any other option not listed in the above dict should be written to 
         ## a properties file
         workloads = None
@@ -303,7 +341,19 @@ class AbstractFabric(object):
                 ## IF
                     
                 LOG.info("Running benchmark on %s", inst)
-                cmd = "ant %s hstore-benchmark %s" % (prefix, hstore_opts_cmd)
+                reconfig_cmd = ''
+                affinity_cmd = ''
+                if reconfigEvents:
+                    if len(reconfigEvents) > 1:
+                      raise NotImplementedError()
+                    reconfig = reconfigEvents[0]
+                    reconfig_cmd = "-Dproc=@ReconfigurationStatic -Dproc_start_time=%d -Dparam0=%s -Dparam1=%s -Dparam2=%s" % (reconfig['delayTimeMS'], reconfig['leaderID'], reconfig['planID'], reconfig['reconfigType'])
+                if affinityEvents:
+                    if len(affinityEvents) > 1:
+                      raise NotImplementedError()
+                    affinity = affinityEvents[0]
+                    affinity_cmd = "-Dproc=@Affinity -Dproc_start_time=%d -Delastic.run_monitoring=true -Delastic.update_plan=true -Delastic.exec_reconf=true -Delastic.max_tuples_move=10000" % (affinity['delayTimeMS'])
+                cmd = "ant %s hstore-benchmark %s %s %s" % (prefix, hstore_opts_cmd, reconfig_cmd, affinity_cmd)
                 output = run(cmd)
                 
                 ## If they wanted a trace file, then we have to ship it back to ourselves
@@ -376,7 +426,7 @@ class AbstractFabric(object):
     ## __writeConf__
     ## ----------------------------------------------
     def __writeConf__(self, inst, project, removals=[ ], revertFirst=False):
-        prefix_include = [ 'site', 'client', 'global', 'benchmark' ]
+        prefix_include = [ 'site', 'client', 'global', 'benchmark', 'partitionplan' ]
         
         hstoreConf_updates = { }
         hstoreConf_removals = set()
@@ -424,8 +474,7 @@ class AbstractFabric(object):
     ## __updateConf__
     ## ----------------------------------------------
     def __updateConf__(self, inst, conf_file, updates={ }, removals=[ ], noSpaces=False):
-        LOG.info("Updating configuration file '%s' - Updates[%d] / Removals[%d]", conf_file, len(updates), len(removals))
-        
+        LOG.debug("Updating configuration file '%s' - Updates[%d] / Removals[%d]", conf_file, len(updates), len(removals))
         contents = self.get_file(inst, conf_file)
         assert len(contents) > 0, "Configuration file '%s' is empty" % conf_file
         

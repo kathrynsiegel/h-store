@@ -3,6 +3,8 @@ package edu.brown.hashing;
 import org.apache.commons.collections15.map.LRUMap;
 import org.voltdb.CatalogContext;
 
+import edu.brown.hstore.conf.HStoreConf;
+
 public class CachedHasher extends DefaultHasher {
 
     private final LRUMap<Object, Integer> cache = new LRUMap<Object, Integer>(2048);
@@ -12,8 +14,8 @@ public class CachedHasher extends DefaultHasher {
      * @param catalog_db
      * @param num_partitions
      */
-    public CachedHasher(CatalogContext catalogContext, int num_partitions) {
-        super(catalogContext, num_partitions);
+    public CachedHasher(CatalogContext catalogContext, int num_partitions, HStoreConf hstore_conf) {
+        super(catalogContext, num_partitions, hstore_conf);
     }
 
     @Override
@@ -30,5 +32,10 @@ public class CachedHasher extends DefaultHasher {
             this.cache.put(value, hash);
         }
         return (hash.intValue());
+    }
+    
+    @Override
+    public AbstractHasher clone() {
+    	return new CachedHasher(this.catalogContext, this.num_partitions, this.hstore_conf);
     }
 }

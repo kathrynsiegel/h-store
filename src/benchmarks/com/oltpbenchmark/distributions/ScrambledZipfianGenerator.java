@@ -1,5 +1,4 @@
-package edu.brown.benchmark.ycsb.distributions;
-
+package com.oltpbenchmark.distributions;
 /**                                                                                                                                                                                
  * Copyright (c) 2010 Yahoo! Inc. All rights reserved.                                                                                                                             
  *                                                                                                                                                                                 

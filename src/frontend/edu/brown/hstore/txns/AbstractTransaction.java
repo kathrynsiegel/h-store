@@ -57,6 +57,7 @@ import edu.brown.interfaces.DebugContext;
 import edu.brown.logging.LoggerUtil;
 import edu.brown.logging.LoggerUtil.LoggerBoolean;
 import edu.brown.pools.Poolable;
+import edu.brown.statistics.FastIntHistogram;
 import edu.brown.utils.PartitionSet;
 import edu.brown.utils.StringUtil;
 
@@ -234,6 +235,11 @@ public abstract class AbstractTransaction implements Poolable, Comparable<Abstra
      * PartitionId -> TableId
      */
     protected final boolean writeTables[][];
+ 
+    // ----------------------------------------------------------------------------
+    // RECONFIGURATION
+    // ----------------------------------------------------------------------------
+    protected boolean causedPull;
     
     // ----------------------------------------------------------------------------
     // INITIALIZATION
@@ -262,6 +268,8 @@ public abstract class AbstractTransaction implements Poolable, Comparable<Abstra
         
         this.readTables = new boolean[numPartitions][];
         this.writeTables = new boolean[numPartitions][];
+        
+        this.causedPull = false;
         
         Arrays.fill(this.exec_firstUndoToken, HStoreConstants.NULL_UNDO_LOGGING_TOKEN);
         Arrays.fill(this.exec_lastUndoToken, HStoreConstants.NULL_UNDO_LOGGING_TOKEN);
@@ -1307,5 +1315,15 @@ public abstract class AbstractTransaction implements Poolable, Comparable<Abstra
             this.cachedDebugContext = new Debug();
         }
         return this.cachedDebugContext;
+    }
+
+
+
+    public boolean isCausedPull() {
+        return causedPull;
+    }
+
+    public void setCausedPull(boolean causedPull) {
+        this.causedPull = causedPull;
     }
 }

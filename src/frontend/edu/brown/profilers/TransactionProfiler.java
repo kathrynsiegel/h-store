@@ -211,6 +211,7 @@ public class TransactionProfiler extends AbstractProfiler implements Poolable {
     
 
     public void startTransaction(long timestamp) {
+    	LOG.info("starting transaction");
         if (this.disabled)
             return;
         if (debug.val)
@@ -367,15 +368,17 @@ public class TransactionProfiler extends AbstractProfiler implements Poolable {
         this.stack.push(this.pm_queue_lock);
     }
     
-    public void startQueueExec() {
-        if (this.disabled) return;
+    public long startQueueExec() {
+        if (this.disabled) return -1;
         assert(this.stack.size() > 0);
         assert(this.stack.peek() != this.pm_queue_exec) : "Duplicate calls for " + this.pm_queue_exec;
         long timestamp = ProfileMeasurement.getTime();
         ProfileMeasurement pm = this.popStack(this.pm_queue_lock, timestamp);
+        long ret = pm.getLast_time();
         if (debug.val) LOG.debug("START " + this.pm_queue_exec.getName());
         ProfileMeasurementUtil.swap(timestamp, pm, this.pm_queue_exec);
         this.stack.push(this.pm_queue_exec);
+        return ret;
     }
 
     // ---------------------------------------------------------------

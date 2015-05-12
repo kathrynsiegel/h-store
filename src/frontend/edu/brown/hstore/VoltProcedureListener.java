@@ -276,6 +276,7 @@ public class VoltProcedureListener extends AbstractEventHandler {
             }
             @Override
             public void invocationQueue(ByteBuffer serializedRequest, RpcCallback<byte[]> done) {
+            	LOG.info("in invocation queue volt file");
                 StoredProcedureInvocation invocation = null;
                 try {
                     invocation = FastDeserializer.deserialize(serializedRequest, StoredProcedureInvocation.class);

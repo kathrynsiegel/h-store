@@ -1,21 +1,26 @@
 package edu.brown.hstore;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.log4j.Logger;
 import org.voltdb.CatalogContext;
 import org.voltdb.ParameterSet;
+import org.voltdb.StoredProcedureInvocation;
 import org.voltdb.VoltTable;
 import org.voltdb.catalog.Database;
 import org.voltdb.catalog.Host;
@@ -24,6 +29,7 @@ import org.voltdb.catalog.Procedure;
 import org.voltdb.catalog.Site;
 import org.voltdb.exceptions.SerializableException;
 import org.voltdb.exceptions.ServerFaultException;
+import org.voltdb.messaging.FastDeserializer;
 import org.voltdb.messaging.FastSerializer;
 import org.voltdb.utils.EstTime;
 import org.voltdb.utils.Pair;
@@ -33,11 +39,26 @@ import com.google.protobuf.RpcCallback;
 import com.google.protobuf.RpcController;
 
 import edu.brown.catalog.CatalogUtil;
+import edu.brown.hstore.Hstoreservice.AsyncPullRequest;
+import edu.brown.hstore.Hstoreservice.AsyncPullResponse;
+import edu.brown.hstore.Hstoreservice.DataTransferRequest;
+import edu.brown.hstore.Hstoreservice.DataTransferResponse;
 import edu.brown.hstore.Hstoreservice.HStoreService;
 import edu.brown.hstore.Hstoreservice.HeartbeatRequest;
 import edu.brown.hstore.Hstoreservice.HeartbeatResponse;
 import edu.brown.hstore.Hstoreservice.InitializeRequest;
 import edu.brown.hstore.Hstoreservice.InitializeResponse;
+import edu.brown.hstore.Hstoreservice.LivePullRequest;
+import edu.brown.hstore.Hstoreservice.LivePullResponse;
+import edu.brown.hstore.Hstoreservice.MultiPullReplyRequest;
+import edu.brown.hstore.Hstoreservice.MultiPullReplyResponse;
+import edu.brown.hstore.Hstoreservice.ReconfigurationControlRequest;
+import edu.brown.hstore.Hstoreservice.ReconfigurationControlResponse;
+import edu.brown.hstore.Hstoreservice.ReconfigurationControlType;
+import edu.brown.hstore.Hstoreservice.ReconfigurationRequest;
+import edu.brown.hstore.Hstoreservice.ReconfigurationResponse;
+import edu.brown.hstore.Hstoreservice.ReplicaLoadTableRequest;
+import edu.brown.hstore.Hstoreservice.ReplicaLoadTableResponse;
 import edu.brown.hstore.Hstoreservice.SendDataRequest;
 import edu.brown.hstore.Hstoreservice.SendDataResponse;
 import edu.brown.hstore.Hstoreservice.ShutdownPrepareRequest;
@@ -51,6 +72,8 @@ import edu.brown.hstore.Hstoreservice.TransactionDebugRequest;
 import edu.brown.hstore.Hstoreservice.TransactionDebugResponse;
 import edu.brown.hstore.Hstoreservice.TransactionFinishRequest;
 import edu.brown.hstore.Hstoreservice.TransactionFinishResponse;
+import edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaRequest;
+import edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse;
 import edu.brown.hstore.Hstoreservice.TransactionInitRequest;
 import edu.brown.hstore.Hstoreservice.TransactionInitResponse;
 import edu.brown.hstore.Hstoreservice.TransactionMapRequest;
@@ -63,13 +86,17 @@ import edu.brown.hstore.Hstoreservice.TransactionRedirectRequest;
 import edu.brown.hstore.Hstoreservice.TransactionRedirectResponse;
 import edu.brown.hstore.Hstoreservice.TransactionReduceRequest;
 import edu.brown.hstore.Hstoreservice.TransactionReduceResponse;
+import edu.brown.hstore.Hstoreservice.TransactionReplicateFinishRequest;
+import edu.brown.hstore.Hstoreservice.TransactionReplicateFinishResponse;
 import edu.brown.hstore.Hstoreservice.TransactionWorkRequest;
 import edu.brown.hstore.Hstoreservice.TransactionWorkResponse;
 import edu.brown.hstore.Hstoreservice.WorkFragment;
-import edu.brown.hstore.callbacks.ShutdownPrepareCallback;
+import edu.brown.hstore.callbacks.BlockingRpcCallback;
 import edu.brown.hstore.callbacks.LocalFinishCallback;
-import edu.brown.hstore.callbacks.TransactionPrefetchCallback;
 import edu.brown.hstore.callbacks.LocalPrepareCallback;
+import edu.brown.hstore.callbacks.ShutdownPrepareCallback;
+import edu.brown.hstore.callbacks.TransactionForwardToReplicaResponseCallback;
+import edu.brown.hstore.callbacks.TransactionPrefetchCallback;
 import edu.brown.hstore.callbacks.TransactionRedirectResponseCallback;
 import edu.brown.hstore.conf.HStoreConf;
 import edu.brown.hstore.dispatchers.TransactionFinishDispatcher;
@@ -83,9 +110,12 @@ import edu.brown.hstore.handlers.TransactionPrefetchHandler;
 import edu.brown.hstore.handlers.TransactionPrepareHandler;
 import edu.brown.hstore.handlers.TransactionReduceHandler;
 import edu.brown.hstore.handlers.TransactionWorkHandler;
+import edu.brown.hstore.internal.ReplicaLoadTableMessage;
+import edu.brown.hstore.replication.ReplicationType;
 import edu.brown.hstore.specexec.PrefetchQueryPlanner;
 import edu.brown.hstore.txns.AbstractTransaction;
 import edu.brown.hstore.txns.DependencyTracker;
+import edu.brown.hstore.txns.ForwardedTransaction;
 import edu.brown.hstore.txns.LocalTransaction;
 import edu.brown.hstore.txns.RemoteTransaction;
 import edu.brown.hstore.txns.TransactionUtil;
@@ -177,6 +207,12 @@ public class HStoreCoordinator implements Shutdownable {
     private final PrefetchQueryPlanner prefetchPlanner;
     
     // ----------------------------------------------------------------------------
+    // REPLICA FORWARDING
+    // ----------------------------------------------------------------------------
+    
+    private HashMap<Long, Semaphore> transactionReplicatePermits;
+    
+    // ----------------------------------------------------------------------------
     // MESSENGER LISTENER THREAD
     // ----------------------------------------------------------------------------
     
@@ -261,6 +297,7 @@ public class HStoreCoordinator implements Shutdownable {
         this.local_site_id = this.catalog_site.getId();
         this.num_sites = this.hstore_site.getCatalogContext().numberOfSites;
         this.channels = new HStoreService[this.num_sites];
+        this.transactionReplicatePermits = new HashMap<Long, Semaphore>();
         
         if (debug.val)
             LOG.debug(String.format("Local Partitions for Site #%d: %s",
@@ -672,6 +709,65 @@ public class HStoreCoordinator implements Shutdownable {
         }
         
         @Override
+    	public void transactionForwardToReplica(RpcController controller, TransactionForwardToReplicaRequest request,
+    	          RpcCallback<TransactionForwardToReplicaResponse> done) {
+        	if (debug.val)
+                LOG.debug(String.format("Received %s from HStoreSite %s",
+                          request.getClass().getSimpleName(),
+                          HStoreThreadManager.formatSiteName(request.getSenderSite())));
+            
+        	ByteBuffer serializedRequest = request.getWork().asReadOnlyByteBuffer();
+            TransactionForwardToReplicaResponseCallback callback = null;
+            try {
+                callback = new TransactionForwardToReplicaResponseCallback(hstore_site);
+                callback.init(local_site_id, request.getSenderSite(), request.getOrigTxnId(), done);
+            } catch (Exception ex) {
+                String msg = "Failed to get " + TransactionRedirectResponseCallback.class.getSimpleName();
+                throw new RuntimeException(msg, ex);
+            }
+            
+            ReplicationType replicationType = ReplicationType.get(hstore_conf.site.replication_protocol);
+    		if (replicationType != null && replicationType == ReplicationType.SEMI) {
+    			HStoreCoordinator.this.transactionReplicateFinish(callback.getOrigTxnId(), request.getPrimaryPartition());
+    		}
+            
+            try {
+                hstore_site.invocationProcess(serializedRequest, callback);
+            } catch (Throwable ex) {
+                shutdownCluster(ex);
+            }
+    	}
+        
+        @Override
+		public void transactionReplicateFinish(RpcController controller, TransactionReplicateFinishRequest request, 
+				RpcCallback<TransactionReplicateFinishResponse> done) {
+			Semaphore permit = HStoreCoordinator.this.transactionReplicatePermits.get(request.getTxnId());
+			if (permit != null) {
+				permit.release();
+			}
+		}
+        
+        @Override
+		public void replicaLoadTable(RpcController controller, ReplicaLoadTableRequest request,
+				RpcCallback<ReplicaLoadTableResponse> done) {
+			VoltTable data = null;
+			try {
+				ByteString bytes = request.getData();
+				data = FastDeserializer.deserialize(bytes.toByteArray(), VoltTable.class);
+			} catch (IOException e) {
+				// silently ignore
+			}
+			ReplicaLoadTableMessage loadTableMessage = new ReplicaLoadTableMessage(
+					request.getOrigTxnId(),
+					request.getClusterName(),
+					request.getDatabaseName(),
+					request.getTableName(),
+					data, 
+					request.getAllowELT());
+			hstore_site.getPartitionExecutor(request.getPartition()).queueUtilityWork(loadTableMessage);
+		}
+        
+        @Override
         public void sendData(RpcController controller, SendDataRequest request, RpcCallback<SendDataResponse> done) {
             // Take the SendDataRequest and pass it to the sendData_handler, which
             // will deserialize the embedded VoltTable and wrap it in something that we can
@@ -768,6 +864,19 @@ public class HStoreCoordinator implements Shutdownable {
             ThreadUtil.sleep(10);
             done.run(builder.setT1S(System.currentTimeMillis()).build());
         }
+        
+        @Override
+        public void reconfiguration(RpcController controller, ReconfigurationRequest request, RpcCallback<ReconfigurationResponse> done) {
+            if (debug.val)
+                LOG.debug(String.format("Received %s from HStoreSite %s",
+                          request.getClass().getSimpleName(),
+                          HStoreThreadManager.formatSiteName(request.getSenderSite())));
+            ReconfigurationResponse.Builder builder = ReconfigurationResponse.newBuilder()
+                                                    .setT0S(request.getT0S())
+                                                    .setSenderSite(local_site_id);
+            ThreadUtil.sleep(10);
+            done.run(builder.build());
+        }
 
         @Override
         public void transactionDebug(RpcController controller, TransactionDebugRequest request, RpcCallback<TransactionDebugResponse> done) {
@@ -795,6 +904,138 @@ public class HStoreCoordinator implements Shutdownable {
             done.run(response);
         }
 
+        @Override
+        public void dataTransfer(RpcController controller,
+            DataTransferRequest request, RpcCallback<DataTransferResponse> done) {
+          
+          if (debug.val)
+            LOG.debug(String.format("Received %s from HStoreSite %s",
+                      request.getClass().getSimpleName(),
+                      HStoreThreadManager.formatSiteName(request.getSenderSite())));
+          
+          VoltTable vt = null;
+          VoltTable minIncl = null;
+          VoltTable maxExcl = null;
+          try {
+        	  ByteString minInclBytes = request.getMinInclusive();
+              ByteString maxExclBytes = request.getMaxExclusive();
+              minIncl = FastDeserializer.deserialize(minInclBytes.toByteArray(), VoltTable.class);
+              maxExcl = FastDeserializer.deserialize(maxExclBytes.toByteArray(), VoltTable.class);
+              
+              vt = FastDeserializer.deserialize(request.getVoltTableData().toByteArray(), VoltTable.class);
+          } catch (IOException e) {
+            // TODO Auto-generated catch block
+            LOG.error("Error in deserializing volt table");
+          }
+          DataTransferResponse response = null;
+          try {
+            response = hstore_site.getReconfigurationCoordinator().receiveTuples(
+                request.getSenderSite(), request.getT0S(), request.getOldPartition(), request.getNewPartition(), 
+                request.getVoltTableName(), vt, minIncl, maxExcl);
+          } catch (Exception e) {
+            // TODO Auto-generated catch block
+            LOG.error("Exception incurred while receiving tuples", e);
+          }
+          
+          done.run(response);
+          
+        }
+
+        @Override
+        public void livePull(RpcController controller, LivePullRequest request,
+            RpcCallback<LivePullResponse> done) {
+          if (debug.val)
+            LOG.debug(String.format("Received %s from HStoreSite %s",
+                      request.getClass().getSimpleName(),
+                      HStoreThreadManager.formatSiteName(request.getSenderSite())));
+          
+          LivePullResponse response = null;
+          try {
+              hstore_site.getReconfigurationCoordinator().dataPullRequest(
+                request, done);
+          } catch (Exception e) {
+            // TODO Auto-generated catch block
+            LOG.error("Exception incurred while receiving tuples", e);
+          }
+          
+          // Callback will be made when the work item is processed
+          // from the queue
+          //done.run(response);
+          
+        }
+
+        @Override
+        public void asyncPull(RpcController controller, AsyncPullRequest request,
+            RpcCallback<AsyncPullResponse> done) {
+            
+            // This is an async data pull request which will be sent to RC and
+            // processed asynchronously
+             try {
+                 hstore_site.getReconfigurationCoordinator().asyncPullRequestFromRC (
+                   request, done);
+             } catch (Exception e) {
+               // TODO Auto-generated catch block
+               LOG.error("Exception occured while processing async pull request", e);
+             }
+            
+        }
+        
+        
+        @Override
+        public void reconfigurationControlMsg(RpcController controller, 
+                ReconfigurationControlRequest request, RpcCallback<ReconfigurationControlResponse> done) {
+
+            if (debug.val)
+                LOG.debug(String.format("Received %s from HStoreSite %s",
+                          request.getClass().getSimpleName(),
+                          HStoreThreadManager.formatSiteName(request.getSenderSite())));
+            
+            // No callback to be sent
+            try{
+                if(request.getReconfigControlType() == ReconfigurationControlType.PULL_RECEIVED){
+                    hstore_site.getReconfigurationCoordinator().deleteTuples(request);
+                } else if(request.getReconfigControlType() == ReconfigurationControlType.CHUNK_RECEIVED){
+                	//TODO : Have to delete tuples for the chunk received messages as well
+                    //hstore_site.getReconfigurationCoordinator().deleteTuples(request);
+                } else if(request.getReconfigControlType() == ReconfigurationControlType.RECONFIGURATION_DONE) {
+                    hstore_site.getReconfigurationCoordinator().leaderReceiveRemoteReconfigComplete(request.getSenderSite());
+                }  else if(request.getReconfigControlType() == ReconfigurationControlType.
+                		RECONFIGURATION_DONE_RECEIVED) {
+                    hstore_site.getReconfigurationCoordinator().receiveReconfigurationCompleteFromLeader();
+                } else if(request.getReconfigControlType() == ReconfigurationControlType.NEXT_RECONFIGURATION_PLAN) {
+                    hstore_site.getReconfigurationCoordinator().receiveNextReconfigurationPlanFromLeader();
+                }
+               
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                LOG.error("Exception incurred while deleting tuples (not just marking)", e);
+              }
+            
+        }
+        
+        @Override
+        public void multiPullReply(RpcController controller, 
+            MultiPullReplyRequest request, RpcCallback<MultiPullReplyResponse> done) {
+        	if (debug.val)
+                LOG.debug(String.format("Received %s from HStoreSite %s",
+                          request.getClass().getSimpleName(),
+                          HStoreThreadManager.formatSiteName(request.getSenderSite())));
+        	
+        	try{
+        		if(request.getIsAsync()){
+        		    if (debug.val) LOG.debug("Processing an async pull reply message");
+        			hstore_site.getReconfigurationCoordinator().processPullReplyFromRC(request, done);
+        		} else {
+        		    if (debug.val) LOG.debug("Processing a live pull reply message");
+                    hstore_site.getReconfigurationCoordinator().processPullReplyFromRC(request, done);
+
+        		}
+        		
+        	} catch (Exception e){
+        		LOG.error("Exception incurred while processing chunked async pull reply", e);
+        	}
+          
+        }
     } // END CLASS
     
     
@@ -816,6 +1057,7 @@ public class HStoreCoordinator implements Shutdownable {
                       ts.getPredictTouchedPartitions().size(), ts.getPredictTouchedPartitions()));
         assert(callback != null) :
             String.format("Trying to initialize %s with a null TransactionInitCallback", ts);
+        
         
         ParameterSet procParams = ts.getProcedureParameters();
         FastSerializer fs = this.serializers.get();
@@ -1275,6 +1517,101 @@ public class HStoreCoordinator implements Shutdownable {
     }
     
     // ----------------------------------------------------------------------------
+    // REPLICATION
+    // ----------------------------------------------------------------------------
+    public void transactionReplicate(byte[] serializedRequest, 
+    		RpcCallback<TransactionForwardToReplicaResponse> replica_callback, 
+    		int originalPartition, int replicaPartition, long transactionID) {    	
+    	int site = catalogContext.getSiteIdForPartitionId(replicaPartition);
+    	if (site == this.local_site_id) {
+			throw new NotImplementedException();
+		}
+		if (this.isShuttingDown()) return;
+		try {
+			ByteString bs = ByteString.copyFrom(serializedRequest);
+			TransactionForwardToReplicaRequest request = TransactionForwardToReplicaRequest.newBuilder()
+					.setSenderSite(this.local_site_id)
+					.setOrigTxnId(transactionID)
+					.setWork(bs)
+					.setPrimaryPartition(originalPartition)
+					.build();
+			this.channels[site].transactionForwardToReplica(new ProtoRpcController(), request, replica_callback);
+		} catch (RuntimeException ex) {
+			// Silently ignore these errors...
+		}
+    }
+    
+    /**
+     * Called by the primary partition when adding a Semaphore for a transaction
+     * that must be replicated onto the primary partition's replicas
+     * @param txn_id
+     * @param permit
+     */
+    public Semaphore addTransactionReplicatePermit(Long txn_id, int numReplicas) {
+    	Semaphore transactionReplicatePermit = new Semaphore(numReplicas);
+        try {
+			transactionReplicatePermit.acquire(numReplicas);
+		} catch (InterruptedException e) {
+			// silently ignore
+		}
+    	this.transactionReplicatePermits.put(txn_id, transactionReplicatePermit);
+    	return transactionReplicatePermit;
+    }
+    
+    /**
+     * Called by the primary partition after it has verified that the transaction
+     * has been replicated onto all necessary replicas. This is just a cleanup
+     * method to remove unnecessary replication semaphores.
+     * @param txn_id
+     */
+    public void removeTransactionReplicatePermit(Long txn_id) {
+    	this.transactionReplicatePermits.remove(txn_id);
+    }
+    
+    /**
+     * This is called by the replica partition when decrementing the semaphore remotely,
+     * from a different site
+     * @param txn_id
+     */
+    public void transactionReplicateFinish(Long txn_id, int partition) {
+    	TransactionReplicateFinishRequest request = TransactionReplicateFinishRequest.newBuilder()
+    			.setTxnId(txn_id).build();
+    	this.channels[catalogContext.getSiteIdForPartitionId(partition)]
+    			.transactionReplicateFinish(new ProtoRpcController(), request, null);
+    }
+    
+    public void replicaLoadTable(RpcCallback<ReplicaLoadTableResponse> replica_callback, int partition, 
+    		long transactionID, String clusterName,
+			String databaseName, String tableName, 
+			VoltTable vt, int allowELT) {
+    	int site = catalogContext.getSiteIdForPartitionId(partition);
+    	if (site == this.local_site_id) {
+			throw new NotImplementedException();
+		}
+		if (this.isShuttingDown()) return;
+    	ByteString bs_vt = null;
+        byte bytes[] = null;
+        try {
+            bytes = ByteBuffer.wrap(FastSerializer.serialize(vt)).array();
+            bs_vt = ByteString.copyFrom(bytes); 
+        } catch (Exception ex) {
+            String msg = String.format("Unexpected error when serializing volt table data");
+            throw new ServerFaultException(msg, ex, transactionID);
+        }
+		ReplicaLoadTableRequest request = ReplicaLoadTableRequest.newBuilder()
+    			.setSenderSite(this.local_site_id)
+    			.setClusterName(clusterName)
+    			.setDatabaseName(databaseName)
+    			.setTableName(tableName)
+    			.setData(bs_vt)
+    			.setAllowELT(allowELT)
+    			.setOrigTxnId(transactionID)
+    			.setPartition(partition).build();
+		this.channels[site].replicaLoadTable(new ProtoRpcController(), request, replica_callback);
+    }
+    
+    
+    // ----------------------------------------------------------------------------
     // TIME SYNCHRONZIATION
     // ----------------------------------------------------------------------------
     
@@ -1538,5 +1875,9 @@ public class HStoreCoordinator implements Shutdownable {
         }
         HStoreService channel = HStoreService.newStub(channels[0]);
         return (channel);
+    }
+
+    public synchronized HStoreService[] getChannels() {
+      return channels;
     }
 }

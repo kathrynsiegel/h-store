@@ -166,6 +166,61 @@ TupleSchema* TupleSchema::createEvictedTupleSchema() {
     return (blockids_schema);
 }
 
+std::string* TupleSchema::createMigrateColumnNames(size_t nCols) {
+    size_t nSchemaCols = nCols*3 + 1;
+    std::string *migrateColumnNames = new std::string[nSchemaCols];
+    migrateColumnNames[0] = std::string("TABLE_NAME");
+  
+    for(int i = 0; i+3 < nSchemaCols; i+=3) {		
+        migrateColumnNames[i+1] = std::string("KEY_TYPE");
+	migrateColumnNames[i+2] = std::string("MIN_INCLUSIVE");
+	migrateColumnNames[i+3] = std::string("MAX_EXCLUSIVE");
+    }
+    return migrateColumnNames;
+}
+
+TupleSchema* TupleSchema::createMigrateTupleSchema(size_t nCols, const std::vector<ValueType>& keyColumnTypes) {
+    size_t nSchemaCols = nCols*3 + 1;
+    std::vector<ValueType> columnTypes(nSchemaCols);
+    std::vector<int32_t> columnSizes(nSchemaCols);
+    std::vector<bool> allowNull(nSchemaCols);
+
+    // create a schema containing a single column for the block_id
+
+    //TABLE NAME
+    columnTypes[0] = VALUE_TYPE_INTEGER;
+    //columnSizes[0] = static_cast<int32_t>(NValue::getTupleStorageSize(VALUE_TYPE_VARCHAR));
+    columnSizes[0] = static_cast<int32_t>(NValue::getTupleStorageSize(VALUE_TYPE_INTEGER));
+    allowNull[0] = false;
+
+    for(int i = 0; i+3 < nSchemaCols; i+=3) {
+      //KEY TYPE
+      columnTypes[i+1] = VALUE_TYPE_INTEGER;
+      columnSizes[i+1] = static_cast<int32_t>(NValue::getTupleStorageSize(VALUE_TYPE_INTEGER));
+      allowNull[i+1] = false;
+
+      ValueType type = keyColumnTypes[i/3];
+      //MIN INCLUSIVE
+      //columnTypes[i+2] = VALUE_TYPE_BIGINT;
+      //columnSizes[i+2] = static_cast<int32_t>(NValue::getTupleStorageSize(VALUE_TYPE_BIGINT));
+      columnTypes[i+2] = type;
+      columnSizes[i+2] = static_cast<int32_t>(NValue::getTupleStorageSize(type));
+      allowNull[i+2] = false;
+
+      //MAX EXCLUSIVE
+      //columnTypes[i+3] = VALUE_TYPE_BIGINT;
+      //columnSizes[i+3] = static_cast<int32_t>(NValue::getTupleStorageSize(VALUE_TYPE_BIGINT));
+      columnTypes[i+3] = type;
+      columnSizes[i+3] = static_cast<int32_t>(NValue::getTupleStorageSize(type));
+      allowNull[i+3] = false;
+    }
+
+    TupleSchema *blockids_schema = TupleSchema::createTupleSchema(columnTypes, columnSizes, allowNull, false);
+
+    return (blockids_schema);
+}
+
+
 TupleSchema* TupleSchema::createTrackerTupleSchema() {
     std::vector<ValueType> columnTypes(2);
     std::vector<int32_t> columnSizes(2);

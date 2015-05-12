@@ -78,6 +78,9 @@ public:
      */
     static TupleSchema* createTrackerTupleSchema();
 
+    static TupleSchema* createMigrateTupleSchema(size_t nCols, const std::vector<ValueType>& keyColumnTypes);
+    static std::string* createMigrateColumnNames(size_t nCols);
+
     /** Static factory method to destroy a TupleSchema object. Set to null after this call */
     static void freeTupleSchema(TupleSchema *schema);
 

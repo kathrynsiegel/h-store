@@ -41,6 +41,9 @@
  * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
+ *
+ *
+ * Essam Mansour Tuple tracking
  */
 
 #ifndef HSTORETABLETUPLE_H
@@ -95,6 +98,8 @@ namespace voltdb {
 #define DELETED_MASK 1
 #define DIRTY_MASK 2
 #define EVICTED_MASK 4
+#define MIGRATED_MASK 8
+#define TO_BE_MIGRATED_MASK 16
 
 class TableColumn;
 
@@ -113,7 +118,21 @@ class TableTuple {
     template<std::size_t keySize> friend class IntsKey;
     template<std::size_t keySize> friend class GenericKey;
 
+    ///Essam Tuple tracking
+    // int64_t m_tupleAccessFreq;
+
 public:
+    //Essam
+    /*
+    inline int64_t getTupleAccessFreq() const {
+            return m_tupleAccessFreq;
+        }
+    inline void updateTupleAccessFreq() {
+    	m_tupleAccessFreq++;
+        }
+    /////////////End/////////////
+    //*/
+
     /** Initialize a tuple unassociated with a table (bad idea... dangerous) */
     explicit TableTuple();
 
@@ -267,6 +286,16 @@ public:
         return (*(reinterpret_cast<const char*> (m_data)) & EVICTED_MASK) == 0 ? false : true;
     }
 
+    inline bool isMigrated() const
+    {
+        return (*(reinterpret_cast<const char*> (m_data)) & MIGRATED_MASK) == 0 ? false : true;
+    }
+
+    inline bool isToBeMigrated() const
+    {
+        return (*(reinterpret_cast<const char*> (m_data)) & TO_BE_MIGRATED_MASK) == 0 ? false : true;
+    }
+    
     /** Is the column value null? */
     inline bool isNull(const int idx) const {
         return getNValue(idx).isNull();
@@ -341,6 +370,13 @@ public:
         return m_schema;
     }
 
+    /* Functor comparator for use with std::set */
+    struct ltTableTuple {
+      bool operator()(const TableTuple &v1, const TableTuple &v2) const {
+	return v1.compare(v2) < 0;
+      }
+    };
+
     /** Print out a human readable description of this tuple */
     std::string debug(const std::string& tableName) const;
     std::string debugNoHeader() const;
@@ -379,6 +415,24 @@ protected:
     inline void setDeletedFalse() {
         // treat the first "value" as a boolean flag
         *(reinterpret_cast<char*> (m_data)) &= static_cast<char>(~DELETED_MASK);
+    }
+
+    inline void setMigratedTrue() {
+      // treat the first "value" as a boolean flag
+      *(reinterpret_cast<char*> (m_data)) |= static_cast<char>(MIGRATED_MASK);
+    }
+    inline void setMigratedFalse() {
+      // treat the first "value" as a boolean flag
+      *(reinterpret_cast<char*> (m_data)) &= static_cast<char>(~MIGRATED_MASK);
+    }
+    
+    inline void setToBeMigratedTrue() {
+      // treat the first "value" as a boolean flag
+      *(reinterpret_cast<char*> (m_data)) |= static_cast<char>(TO_BE_MIGRATED_MASK);
+    }
+    inline void setToBeMigratedFalse() {
+      // treat the first "value" as a boolean flag
+      *(reinterpret_cast<char*> (m_data)) &= static_cast<char>(~TO_BE_MIGRATED_MASK);
     }
 
     inline void setDirtyTrue() {
@@ -426,19 +480,23 @@ private:
 
 inline TableTuple::TableTuple() :
     m_schema(NULL), m_data(NULL) {
+
 }
 
 inline TableTuple::TableTuple(const TableTuple &rhs) :
     m_schema(rhs.m_schema), m_data(rhs.m_data) {
+
 }
 
 inline TableTuple::TableTuple(const TupleSchema *schema) :
     m_schema(schema), m_data(NULL) {
+
     assert (m_schema);
 }
 
 /** Setup the tuple given the specified data location and schema **/
 inline TableTuple::TableTuple(char *data, const voltdb::TupleSchema *schema) {
+	//m_tupleAccessFreq = 0; //Essam
     assert(data);
     assert(schema);
     m_data = data;

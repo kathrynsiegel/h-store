@@ -5,11 +5,25 @@ import org.apache.log4j.Logger;
 import com.google.protobuf.RpcCallback;
 import com.google.protobuf.RpcController;
 
+import edu.brown.hstore.Hstoreservice.AsyncPullRequest;
+import edu.brown.hstore.Hstoreservice.AsyncPullResponse;
+import edu.brown.hstore.Hstoreservice.DataTransferRequest;
+import edu.brown.hstore.Hstoreservice.DataTransferResponse;
 import edu.brown.hstore.Hstoreservice.HStoreService;
 import edu.brown.hstore.Hstoreservice.HeartbeatRequest;
 import edu.brown.hstore.Hstoreservice.HeartbeatResponse;
 import edu.brown.hstore.Hstoreservice.InitializeRequest;
 import edu.brown.hstore.Hstoreservice.InitializeResponse;
+import edu.brown.hstore.Hstoreservice.LivePullRequest;
+import edu.brown.hstore.Hstoreservice.LivePullResponse;
+import edu.brown.hstore.Hstoreservice.MultiPullReplyRequest;
+import edu.brown.hstore.Hstoreservice.MultiPullReplyResponse;
+import edu.brown.hstore.Hstoreservice.ReconfigurationControlRequest;
+import edu.brown.hstore.Hstoreservice.ReconfigurationControlResponse;
+import edu.brown.hstore.Hstoreservice.ReconfigurationRequest;
+import edu.brown.hstore.Hstoreservice.ReconfigurationResponse;
+import edu.brown.hstore.Hstoreservice.ReplicaLoadTableRequest;
+import edu.brown.hstore.Hstoreservice.ReplicaLoadTableResponse;
 import edu.brown.hstore.Hstoreservice.SendDataRequest;
 import edu.brown.hstore.Hstoreservice.SendDataResponse;
 import edu.brown.hstore.Hstoreservice.ShutdownPrepareRequest;
@@ -22,6 +36,8 @@ import edu.brown.hstore.Hstoreservice.TransactionDebugRequest;
 import edu.brown.hstore.Hstoreservice.TransactionDebugResponse;
 import edu.brown.hstore.Hstoreservice.TransactionFinishRequest;
 import edu.brown.hstore.Hstoreservice.TransactionFinishResponse;
+import edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaRequest;
+import edu.brown.hstore.Hstoreservice.TransactionForwardToReplicaResponse;
 import edu.brown.hstore.Hstoreservice.TransactionInitRequest;
 import edu.brown.hstore.Hstoreservice.TransactionInitResponse;
 import edu.brown.hstore.Hstoreservice.TransactionMapRequest;
@@ -34,16 +50,18 @@ import edu.brown.hstore.Hstoreservice.TransactionRedirectRequest;
 import edu.brown.hstore.Hstoreservice.TransactionRedirectResponse;
 import edu.brown.hstore.Hstoreservice.TransactionReduceRequest;
 import edu.brown.hstore.Hstoreservice.TransactionReduceResponse;
+import edu.brown.hstore.Hstoreservice.TransactionReplicateFinishRequest;
+import edu.brown.hstore.Hstoreservice.TransactionReplicateFinishResponse;
 import edu.brown.hstore.Hstoreservice.TransactionWorkRequest;
 import edu.brown.hstore.Hstoreservice.TransactionWorkResponse;
+import edu.brown.hstore.conf.HStoreConf;
+import edu.brown.hstore.txns.RemoteTransaction;
 import edu.brown.logging.LoggerUtil;
 import edu.brown.logging.LoggerUtil.LoggerBoolean;
 import edu.brown.utils.EventObservable;
 import edu.brown.utils.EventObserver;
 import edu.brown.utils.PartitionSet;
 import edu.brown.utils.StringUtil;
-import edu.brown.hstore.conf.HStoreConf;
-import edu.brown.hstore.txns.RemoteTransaction;
 
 public class MockHStoreCoordinator extends HStoreCoordinator {
     private static final Logger LOG = Logger.getLogger(MockHStoreCoordinator.class);
@@ -170,6 +188,18 @@ public class MockHStoreCoordinator extends HStoreCoordinator {
             // TODO Auto-generated method stub
             
         }
+        
+        @Override
+        public void reconfiguration(RpcController controller, ReconfigurationRequest request, RpcCallback<ReconfigurationResponse> done) {
+            // TODO Auto-generated method stub
+            
+        }
+        
+        @Override
+        public void multiPullReply(RpcController controller, 
+            MultiPullReplyRequest request, RpcCallback<MultiPullReplyResponse> done) {
+          
+        }
 
         @Override
         public void transactionMap(RpcController controller, TransactionMapRequest request, RpcCallback<TransactionMapResponse> done) {
@@ -207,6 +237,58 @@ public class MockHStoreCoordinator extends HStoreCoordinator {
             // TODO Auto-generated method stub
             
         }
+
+        @Override
+        public void dataTransfer(RpcController controller,
+            DataTransferRequest request, RpcCallback<DataTransferResponse> done) {
+          // TODO Auto-generated method stub
+          
+        }
+
+        @Override
+        public void livePull(RpcController controller, LivePullRequest request,
+            RpcCallback<LivePullResponse> done) {
+          // TODO Auto-generated method stub
+          
+        }
+
+        @Override
+        public void reconfigurationControlMsg(RpcController controller, 
+                ReconfigurationControlRequest request, RpcCallback<ReconfigurationControlResponse> done) {
+            // TODO Auto-generated method stub
+            
+        }
+
+		@Override
+		public void asyncPull(RpcController controller,
+				AsyncPullRequest request, RpcCallback<AsyncPullResponse> done) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void transactionForwardToReplica(RpcController controller,
+				TransactionForwardToReplicaRequest request,
+				RpcCallback<TransactionForwardToReplicaResponse> done) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void transactionReplicateFinish(RpcController controller,
+				TransactionReplicateFinishRequest request,
+				RpcCallback<TransactionReplicateFinishResponse> done) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void replicaLoadTable(RpcController controller,
+				ReplicaLoadTableRequest request,
+				RpcCallback<ReplicaLoadTableResponse> done) {
+			// TODO Auto-generated method stub
+			
+		}
     }
 
 }

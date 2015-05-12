@@ -553,6 +553,14 @@ public class BatchPlanner {
         return (this.batchSize);
     }
 
+    public BatchPlan plan(final Long txn_id,
+            final int base_partition,
+            final PartitionSet predict_partitions,
+            final FastIntHistogram touched_partitions,
+            final ParameterSet[] batchArgs) {
+        return plan(txn_id, base_partition, predict_partitions, touched_partitions, batchArgs, -1);
+    }
+    
     /**
      * Generate a new BatchPlan for a batch of queries requested by the txn
      * 
@@ -567,7 +575,8 @@ public class BatchPlanner {
                           final int base_partition,
                           final PartitionSet predict_partitions,
                           final FastIntHistogram touched_partitions,
-                          final ParameterSet[] batchArgs) {
+                          final ParameterSet[] batchArgs,
+                          final int override_partition) {
         final boolean predict_singlePartitioned = (predict_partitions.size() == 1);
         
         if (hstore_conf.site.planner_profiling) {
@@ -625,7 +634,11 @@ public class BatchPlanner {
                         Object params[] = batchArgs[stmt_index].toArray();
                         this.cache_isSinglePartition[stmt_index] = true;
                         for (int idx : this.cache_fastLookups[stmt_index]) {
-                            int hash = p_estimator.getHasher().hash(params[idx], this.catalog_stmts[stmt_index]); 
+                            int hash = -1;
+                            if (override_partition==-1)
+                                hash = p_estimator.getHasher().hash(params[idx], this.catalog_stmts[stmt_index]);
+                            else 
+                                hash = override_partition;
                             if (hash != base_partition) {
                                 if (debug.val)
                                     LOG.debug(String.format("[#%d-%02d] Failed to match cached partition info for %s at idx=%d: " +
@@ -844,7 +857,10 @@ public class BatchPlanner {
                 // Only mark that we touched these partitions if the Statement
                 // is not on a replicated table or it's not read-only
                 if (is_replicated_only == false || is_read_only == false) {
-                    touched_partitions.put(stmt_all_partitions.get());
+                    int part = stmt_all_partitions.get();
+                    if (part >= 0) {
+                        touched_partitions.put(part);
+                    }
                 }
             }
             // Distributed Query

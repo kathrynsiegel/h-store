@@ -205,12 +205,19 @@ bool SeqScanExecutor::p_execute(const NValueArray &params, ReadWriteTracker *tra
         int tuple_ctr = 0;
         while (iterator.next(tuple))
         {
+            if (tuple.isMigrated()){
+              //Skip migrated
+              continue;
+            }
             // Read/Write Set Tracking
             if (tracker != NULL) {
                 tracker->markTupleRead(target_table, &tuple);
             }
             
             target_table->updateTupleAccessCount();
+            //tuple.updateTupleAccessFreq() ; //Essam Tuple
+
+
             VOLT_TRACE("INPUT TUPLE: %s, %d/%d\n",
                        tuple.debug(target_table->name()).c_str(), tuple_ctr,
                        (int)target_table->activeTupleCount());

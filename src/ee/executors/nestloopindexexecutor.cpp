@@ -261,8 +261,14 @@ bool NestLoopIndexExecutor::p_execute(const NValueArray &params, ReadWriteTracke
     while (outer_iterator.next(outer_tuple)) {
         VOLT_TRACE("outer_tuple:%s",
                    outer_tuple.debug(outer_table->name()).c_str());
+        
+        if (outer_tuple.isMigrated()){
+          //Skip migrated
+          continue;
+        }
+        
         outer_table->updateTupleAccessCount();
-
+        
         //
         // Now use the outer table tuple to construct the search key
         // against the inner table
@@ -315,8 +321,13 @@ bool NestLoopIndexExecutor::p_execute(const NValueArray &params, ReadWriteTracke
                (m_lookupType != INDEX_LOOKUP_TYPE_EQ &&
                 !(inner_tuple = index->nextValue()).isNullTuple()))
         {
+            if (inner_tuple.isMigrated()){
+              //Skip migrated
+              continue;
+            }
             match = true;
             inner_table->updateTupleAccessCount();
+            //inner_tuple.updateTupleAccessFreq() ; //Essam Tuple
 
             VOLT_TRACE("inner_tuple:%s",
                        inner_tuple.debug(inner_table->name()).c_str());
