@@ -6477,7 +6477,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		// if a replicated transaction, then send acknowledgement
 		// that replication has succeeded
 		ReplicationType replicationType = ReplicationType.get(hstore_conf.site.replication_protocol);
-		if (replicationType == ReplicationType.SYNC && 
+		if (replicationType != null && replicationType == ReplicationType.SYNC && 
 				!ts.isSysProc() && !this.hstore_site.isPrimaryPartition(this.partitionId)) {
 			Map<Integer, List<Integer>> partitionReplicas = this.hstore_site
 					.getPartitionReplicasMap();

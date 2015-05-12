@@ -34,10 +34,10 @@ import org.voltdb.catalog.MaterializedViewInfo;
 import org.voltdb.catalog.Table;
 import org.voltdb.exceptions.MispredictionException;
 
-
 import edu.brown.catalog.CatalogUtil;
 import edu.brown.hstore.HStoreConstants;
 import edu.brown.hstore.PartitionExecutor.SystemProcedureExecutionContext;
+import edu.brown.hstore.replication.ReplicationType;
 import edu.brown.hstore.txns.AbstractTransaction;
 import edu.brown.hstore.txns.LocalTransaction;
 import edu.brown.logging.LoggerUtil;
@@ -98,22 +98,24 @@ public class LoadMultipartitionTable extends VoltSystemProcedure {
             assert(this.isInitialized()) : " The sysproc " + this.getClass().getSimpleName() + " was not initialized properly";
             try {
                 AbstractTransaction ts = this.hstore_site.getTransaction(txn_id);
-                LOG.info(String.format("got load multipartition table txn %s %s", ts.getBasePartition(), 
-                		this.hstore_site.isPrimaryPartition(ts.getBasePartition())));
-                if (this.hstore_site.isPrimaryPartition(this.executor.getPartitionId())) { // only carry out this txn if a primary
-                	LOG.info("loading table and sending to replica");
-                	this.executor.loadTable(ts,
-                                        context.getCluster().getName(),
-                                        context.getDatabase().getName(),
-                                        table_name, table, 0);   
-                	LOG.info("loading table and sending to replica 2");
-                	// forward to replicas
-                	this.executor.replicaLoadTable(ts,
-                			context.getCluster().getName(),
-                            context.getDatabase().getName(),
-                            table_name, table, 0);
+                ReplicationType replicationType = ReplicationType.get(hstore_conf.site.replication_protocol);
+                if(replicationType != null && replicationType != ReplicationType.NONE){
+	                if (this.hstore_site.isPrimaryPartition(this.executor.getPartitionId())) { // only carry out this txn if a primary
+	                	this.executor.loadTable(ts,
+	                                        context.getCluster().getName(),
+	                                        context.getDatabase().getName(),
+	                                        table_name, table, 0);   
+	                	// forward to replicas
+	                	this.executor.replicaLoadTable(ts,
+	                			context.getCluster().getName(),
+	                            context.getDatabase().getName(),
+	                            table_name, table, 0);
+	                }
                 } else {
-                	LOG.info("skipping load table");
+                	this.executor.loadTable(ts,
+                            context.getCluster().getName(),
+                            context.getDatabase().getName(),
+                            table_name, table, 0); 
                 }
             } catch (VoltAbortException e) {
                 // must continue and reply with dependency.
