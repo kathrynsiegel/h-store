@@ -1752,6 +1752,7 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         } 
+        LOG.info(String.format("parameter set passed: %s", procParams));
         assert(procParams != null) :
             "The parameters object is null for new txn from client #" + client_handle;
         if (debug.val)
