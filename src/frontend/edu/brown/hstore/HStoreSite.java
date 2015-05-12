@@ -1752,7 +1752,7 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         } 
-        LOG.info(String.format("parameter set passed: %s", procParams));
+        
         assert(procParams != null) :
             "The parameters object is null for new txn from client #" + client_handle;
         if (debug.val)
@@ -1807,6 +1807,7 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
         // 2012-12-24 - We always want the network threads to do the initialization
         if (trace.val)
             LOG.trace("Initializing transaction request using network processing thread");
+        
         LocalTransaction ts = this.txnInitializer.createLocalTransaction( 
                                         buffer,
                                         timestamp,
@@ -1815,6 +1816,7 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
                                         catalog_proc,
                                         procParams,
                                         clientCallback);
+        LOG.info(String.format("transaction %s parameter set passed: %s", ts.getTransactionId(), procParams));
         this.transactionQueue(ts);
         if (trace.val)
             LOG.trace(String.format("Finished initial processing of new txn."));
