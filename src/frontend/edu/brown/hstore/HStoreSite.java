@@ -92,6 +92,7 @@ import edu.brown.hstore.callbacks.LocalFinishCallback;
 import edu.brown.hstore.callbacks.LocalInitQueueCallback;
 import edu.brown.hstore.callbacks.PartitionCountingCallback;
 import edu.brown.hstore.callbacks.RedirectCallback;
+import edu.brown.hstore.callbacks.TransactionForwardToReplicaResponseCallback;
 import edu.brown.hstore.cmdlog.CommandLogWriter;
 import edu.brown.hstore.conf.HStoreConf;
 import edu.brown.hstore.estimators.EstimatorState;
@@ -1796,7 +1797,8 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
         // -------------------------------
         // REDIRECT TXN TO PROPER BASE PARTITION
         // -------------------------------
-        if (this.isLocalPartition(base_partition) == false) {
+        LOG.info(String.format("base partition %s, client callback %s", base_partition, clientCallback));
+        if (this.isLocalPartition(base_partition) == false && !(clientCallback instanceof TransactionForwardToReplicaResponseCallback)) {
             // If the base_partition isn't local, then we need to ship it off to
             // the right HStoreSite
         	LOG.info(String.format("WARN: redirecting transaction"));
