@@ -3074,7 +3074,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		// -------------------------
 		ReplicationType replicationType = ReplicationType.get(hstore_conf.site.replication_protocol);
 		int basePartition = ts.getBasePartition();
-		if (replicationType != null && replicationType != ReplicationType.NONE && 
+		if (!ts.isPredictReadOnly() && replicationType != null && replicationType != ReplicationType.NONE && 
 				!ts.isSysProc() && this.hstore_site.isPrimaryPartition(basePartition)) {
 			LOG.info("Replication Protocol enabled: " + replicationType.toString());
 			final List<Integer> partitionReplicas = this.hstore_site.getPartitionReplicas(basePartition);
