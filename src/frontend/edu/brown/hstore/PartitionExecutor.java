@@ -3122,7 +3122,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 //				this.hstore_coordinator.transactionReplicate(serializedSpi,
 //						replica_callback, tsRep.getBasePartition(),
 //						tsRep.getTransactionId());
-				LOG.info(String.format("on primary: transaction: %s, procedure: %s, procedure parameters: %s", ts.getTransactionId(), ts.getProcedure(), ts.getProcedureParameters()));
+				LOG.info(String.format("on primary: transaction: %s, procedure: %s, procedure parameters: %s", ts.getTransactionId(), ts.getProcedure(), ts.getProcedureParameters().toArray()));
 				Procedure catalog_proc = ts.getProcedure();
 				StoredProcedureInvocation spi = new StoredProcedureInvocation(
 						ts.getClientHandle(), catalog_proc.getId(),

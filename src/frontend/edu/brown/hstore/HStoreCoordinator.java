@@ -727,20 +727,6 @@ public class HStoreCoordinator implements Shutdownable {
                 throw new RuntimeException(msg, ex);
             }
             
-            
-            
-            final FastDeserializer incomingDeserializer = new FastDeserializer();
-        	ParameterSet procParams = new ParameterSet();
-            try {
-                StoredProcedureInvocation.seekToParameterSet(serializedRequest);
-                incomingDeserializer.setBuffer(serializedRequest);
-                procParams.readExternal(incomingDeserializer);
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            } 
-            LOG.info(String.format("here are the actual procparams: %s", procParams));
-            
-            
             try {
                 hstore_site.invocationProcess(serializedRequest, callback);
             } catch (Throwable ex) {
@@ -1542,23 +1528,6 @@ public class HStoreCoordinator implements Shutdownable {
     public void transactionReplicate(byte[] serializedRequest, 
     		RpcCallback<TransactionForwardToReplicaResponse> replica_callback, 
     		int partition, long transactionID) {
-    	
-    	
-    	ByteString bs1 = ByteString.copyFrom(serializedRequest);
-    	ByteBuffer serializedRequest1 = bs1.asReadOnlyByteBuffer();
-        TransactionForwardToReplicaResponseCallback callback = null;
-        final FastDeserializer incomingDeserializer = new FastDeserializer();
-    	ParameterSet procParams = new ParameterSet();
-        try {
-            StoredProcedureInvocation.seekToParameterSet(serializedRequest1);
-            incomingDeserializer.setBuffer(serializedRequest1);
-            procParams.readExternal(incomingDeserializer);
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        } 
-        LOG.info(String.format("123here are the actual procparams: %s", procParams));
-    	
-    	
     	
     	LOG.info("reached transactionreplicate method");
     	int site = catalogContext.getSiteIdForPartitionId(partition);
