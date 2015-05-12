@@ -1692,13 +1692,6 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
      * @param clientCallback
      */
     public void invocationProcess(ByteBuffer buffer, RpcCallback<ClientResponseImpl> clientCallback) {
-//        if (hstore_conf.site.network_profiling || hstore_conf.site.txn_profiling) {
-//            long timestamp = ProfileMeasurement.getTime();
-//            if (hstore_conf.site.network_profiling) {
-//                ProfileMeasurement.swap(timestamp, this.profiler.network_idle_time, this.profiler.network_processing_time);
-//            }
-//        }
-        
         long timestamp = -1;
         if (hstore_conf.global.nanosecond_latencies) {
             timestamp = System.nanoTime();
@@ -1753,9 +1746,7 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         } 
-        
-//        LOG.info(String.format("transaction 123parameter set passed: %s", procParams));
-        
+                
         assert(procParams != null) :
             "The parameters object is null for new txn from client #" + client_handle;
         if (debug.val)

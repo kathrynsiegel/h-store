@@ -191,6 +191,7 @@ import edu.brown.hstore.reconfiguration.ReconfigurationStats;
 import edu.brown.hstore.reconfiguration.ReconfigurationTracking;
 import edu.brown.hstore.reconfiguration.ReconfigurationTrackingInterface;
 import edu.brown.hstore.reconfiguration.ReconfigurationUtil;
+import edu.brown.hstore.replication.ReplicationType;
 import edu.brown.hstore.specexec.QueryTracker;
 import edu.brown.hstore.specexec.checkers.AbstractConflictChecker;
 import edu.brown.hstore.specexec.checkers.MarkovConflictChecker;
@@ -3071,16 +3072,21 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		// -------------------------
 		// REPLICATE
 		// -------------------------
+		ReplicationType replicationType = ReplicationType.get(hstore_conf.site.replication_protocol);
 		int basePartition = ts.getBasePartition();
-		if (!ts.isSysProc() && this.hstore_site.isPrimaryPartition(basePartition)) {
-			final List<Integer> partitionReplicas = this.hstore_site
-					.getPartitionReplicas(basePartition);
+		if (replicationType != null && replicationType != ReplicationType.NONE && 
+				!ts.isSysProc() && this.hstore_site.isPrimaryPartition(basePartition)) {
+			LOG.info("Replication Protocol enabled: " + replicationType.toString());
+			final List<Integer> partitionReplicas = this.hstore_site.getPartitionReplicas(basePartition);
 			int numReplicas = partitionReplicas.size();
 			
 			// create semaphore and callback for synchronous and semi-synchronous replication
-			Semaphore permit = this.hstore_coordinator
-					.addTransactionReplicatePermit(ts.getTransactionId(),
-							numReplicas);
+			Semaphore permit = new Semaphore(0);
+			if (replicationType == ReplicationType.SYNC || replicationType == ReplicationType.SEMI) {
+				permit = this.hstore_coordinator
+						.addTransactionReplicatePermit(ts.getTransactionId(),
+								numReplicas);
+			}
 			TransactionForwardToReplicaCallback replica_callback = new TransactionForwardToReplicaCallback(
 					numReplicas);
 
@@ -3108,14 +3114,16 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 			}
 
 			// block until semaphore is released
-			try {
-				permit.acquire(numReplicas);
-			} catch (InterruptedException e) {
-				// silently ignore
+			if (replicationType == ReplicationType.SYNC || replicationType == ReplicationType.SEMI) {
+				try {
+					permit.acquire(numReplicas);
+				} catch (InterruptedException e) {
+					// silently ignore
+				}
+				permit.release(numReplicas);
+				this.hstore_coordinator.removeTransactionReplicatePermit(ts
+						.getTransactionId());
 			}
-			permit.release(numReplicas);
-			this.hstore_coordinator.removeTransactionReplicatePermit(ts
-					.getTransactionId());
 		}
 
 		if (hstore_conf.site.txn_profiling && ts.profiler != null) {
@@ -6468,7 +6476,9 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 			ClientResponseImpl cresponse) {
 		// if a replicated transaction, then send acknowledgement
 		// that replication has succeeded
-		if (!ts.isSysProc() && !this.hstore_site.isPrimaryPartition(this.partitionId)) {
+		ReplicationType replicationType = ReplicationType.get(hstore_conf.site.replication_protocol);
+		if (replicationType == ReplicationType.SYNC && 
+				!ts.isSysProc() && !this.hstore_site.isPrimaryPartition(this.partitionId)) {
 			Map<Integer, List<Integer>> partitionReplicas = this.hstore_site
 					.getPartitionReplicasMap();
 			Iterator<Entry<Integer, List<Integer>>> it = partitionReplicas

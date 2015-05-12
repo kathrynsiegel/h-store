@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -110,6 +111,7 @@ import edu.brown.hstore.handlers.TransactionPrepareHandler;
 import edu.brown.hstore.handlers.TransactionReduceHandler;
 import edu.brown.hstore.handlers.TransactionWorkHandler;
 import edu.brown.hstore.internal.ReplicaLoadTableMessage;
+import edu.brown.hstore.replication.ReplicationType;
 import edu.brown.hstore.specexec.PrefetchQueryPlanner;
 import edu.brown.hstore.txns.AbstractTransaction;
 import edu.brown.hstore.txns.DependencyTracker;
@@ -713,7 +715,8 @@ public class HStoreCoordinator implements Shutdownable {
                 LOG.debug(String.format("Received %s from HStoreSite %s",
                           request.getClass().getSimpleName(),
                           HStoreThreadManager.formatSiteName(request.getSenderSite())));
-            ByteBuffer serializedRequest = request.getWork().asReadOnlyByteBuffer();
+            
+        	ByteBuffer serializedRequest = request.getWork().asReadOnlyByteBuffer();
             TransactionForwardToReplicaResponseCallback callback = null;
             try {
                 callback = new TransactionForwardToReplicaResponseCallback(hstore_site);
@@ -722,6 +725,12 @@ public class HStoreCoordinator implements Shutdownable {
                 String msg = "Failed to get " + TransactionRedirectResponseCallback.class.getSimpleName();
                 throw new RuntimeException(msg, ex);
             }
+            
+            ReplicationType replicationType = ReplicationType.get(hstore_conf.site.replication_protocol);
+    		if (replicationType == ReplicationType.SEMI) {
+    			HStoreCoordinator.this.transactionReplicateFinish(callback.getOrigTxnId(), request.getPrimaryPartition());
+    		}
+            
             try {
                 hstore_site.invocationProcess(serializedRequest, callback);
             } catch (Throwable ex) {
@@ -1523,7 +1532,9 @@ public class HStoreCoordinator implements Shutdownable {
 			TransactionForwardToReplicaRequest request = TransactionForwardToReplicaRequest.newBuilder()
 					.setSenderSite(this.local_site_id)
 					.setOrigTxnId(transactionID)
-					.setWork(bs).build();
+					.setWork(bs)
+					.setPrimaryPartition(partition)
+					.build();
 			this.channels[site].transactionForwardToReplica(new ProtoRpcController(), request, replica_callback);
 		} catch (RuntimeException ex) {
 			// Silently ignore these errors...
@@ -1537,16 +1548,13 @@ public class HStoreCoordinator implements Shutdownable {
      * @param permit
      */
     public Semaphore addTransactionReplicatePermit(Long txn_id, int numReplicas) {
-    	LOG.info(String.format("got to semaphore for txn %s", txn_id));
     	Semaphore transactionReplicatePermit = new Semaphore(numReplicas);
         try {
 			transactionReplicatePermit.acquire(numReplicas);
 		} catch (InterruptedException e) {
-			LOG.info("error!!!!!");
 			// silently ignore
 		}
     	this.transactionReplicatePermits.put(txn_id, transactionReplicatePermit);
-    	LOG.info(String.format("added permit on site %s for txn %s", this.local_site_id, txn_id));
     	return transactionReplicatePermit;
     }
     
@@ -1566,8 +1574,6 @@ public class HStoreCoordinator implements Shutdownable {
      * @param txn_id
      */
     public void transactionReplicateFinish(Long txn_id, int partition) {
-    	LOG.info(String.format("sending transaction finish for %s from site %s to site %s", 
-    			txn_id, this.local_site_id, catalogContext.getSiteIdForPartitionId(partition)));
     	TransactionReplicateFinishRequest request = TransactionReplicateFinishRequest.newBuilder()
     			.setTxnId(txn_id).build();
     	this.channels[catalogContext.getSiteIdForPartitionId(partition)]
@@ -1592,7 +1598,6 @@ public class HStoreCoordinator implements Shutdownable {
             String msg = String.format("Unexpected error when serializing volt table data");
             throw new ServerFaultException(msg, ex, transactionID);
         }
-        LOG.info("here");
 		ReplicaLoadTableRequest request = ReplicaLoadTableRequest.newBuilder()
     			.setSenderSite(this.local_site_id)
     			.setClusterName(clusterName)
@@ -1602,7 +1607,6 @@ public class HStoreCoordinator implements Shutdownable {
     			.setAllowELT(allowELT)
     			.setOrigTxnId(transactionID)
     			.setPartition(partition).build();
-		LOG.info(String.format("sending out replica load table request for transaction"));
 		this.channels[site].replicaLoadTable(new ProtoRpcController(), request, replica_callback);
     }
     
