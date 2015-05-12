@@ -3128,14 +3128,15 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 						ts.getClientHandle(), catalog_proc.getId(),
 						catalog_proc.getName(), ts.getProcedureParameters().toArray());
 				spi.setBasePartition(partitionReplicas.get(i));
+				FastSerializer fsRep = new FastSerializer();
 				try {
-					this.fs.writeObject(spi);
+					fsRep.writeObject(spi);
 				} catch (IOException ex) {
 					String msg = "Failed to serialize StoredProcedureInvocation to forward txn to replica";
 					throw new ServerFaultException(msg, ex,
 							ts.getTransactionId());
 				}
-				byte[] serializedSpi = this.fs.getBytes();
+				byte[] serializedSpi = fsRep.getBytes();
 				LOG.info(String.format("sending transaction %s to replica", ts.getTransactionId()));
 				
 				ByteString bs1 = ByteString.copyFrom(serializedSpi);
@@ -3149,6 +3150,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		        } catch (Exception ex) {
 		            throw new RuntimeException(ex);
 		        } 
+		        
 				LOG.info(String.format("deserialized procparams: %s",procParams));
 				
 				
