@@ -3151,6 +3151,8 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		        } 
 				LOG.info(String.format("deserialized procparams: %s",procParams));
 				
+				
+				
 				this.hstore_coordinator.transactionReplicate(serializedSpi,
 						replica_callback, partitionReplicas.get(i),
 						ts.getTransactionId());

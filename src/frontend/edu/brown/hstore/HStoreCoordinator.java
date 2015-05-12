@@ -1544,20 +1544,20 @@ public class HStoreCoordinator implements Shutdownable {
     		int partition, long transactionID) {
     	
     	
-//    	ByteString bs1 = ByteString.copyFrom(serializedRequest);
-//    	ByteBuffer serializedRequest1 = bs1.asReadOnlyByteBuffer();
-//        TransactionForwardToReplicaResponseCallback callback = null;
-//        final FastDeserializer incomingDeserializer = new FastDeserializer();
-//    	ParameterSet procParams = new ParameterSet();
-//        try {
-//            StoredProcedureInvocation.seekToParameterSet(serializedRequest1);
-//            incomingDeserializer.setBuffer(serializedRequest1);
-//            procParams.readExternal(incomingDeserializer);
-//        } catch (Exception ex) {
-//            throw new RuntimeException(ex);
-//        } 
-//        LOG.info(String.format("123here are the actual procparams: ", procParams));
-//    	
+    	ByteString bs1 = ByteString.copyFrom(serializedRequest);
+    	ByteBuffer serializedRequest1 = bs1.asReadOnlyByteBuffer();
+        TransactionForwardToReplicaResponseCallback callback = null;
+        final FastDeserializer incomingDeserializer = new FastDeserializer();
+    	ParameterSet procParams = new ParameterSet();
+        try {
+            StoredProcedureInvocation.seekToParameterSet(serializedRequest1);
+            incomingDeserializer.setBuffer(serializedRequest1);
+            procParams.readExternal(incomingDeserializer);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        } 
+        LOG.info(String.format("123here are the actual procparams: ", procParams));
+    	
     	
     	
     	LOG.info("reached transactionreplicate method");
