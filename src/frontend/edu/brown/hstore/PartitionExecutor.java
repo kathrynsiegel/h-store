@@ -3124,9 +3124,17 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 //						tsRep.getTransactionId());
 				LOG.info(String.format("on primary: transaction: %s, procedure: %s, procedure parameters: %s", ts.getTransactionId(), ts.getProcedure(), ts.getProcedureParameters()));
 				Procedure catalog_proc = ts.getProcedure();
+				ParameterSet parameters = ts.getProcedureParameters();
+				ParameterSet repParameters = new ParameterSet();
+				try {
+					parameters.writeExternal(fs);
+					repParameters.readExternal(new FastDeserializer(fs.getBytes()));
+				} catch (IOException e) {
+					LOG.info("error!!!");
+				}
 				StoredProcedureInvocation spi = new StoredProcedureInvocation(
 						ts.getClientHandle(), catalog_proc.getId(),
-						catalog_proc.getName(), ts.getProcedureParameters()
+						catalog_proc.getName(), repParameters
 								.toArray());
 				spi.setBasePartition(partitionReplicas.get(i));
 				spi.setRestartCounter(ts.getRestartCounter());
