@@ -3122,7 +3122,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 //				this.hstore_coordinator.transactionReplicate(serializedSpi,
 //						replica_callback, tsRep.getBasePartition(),
 //						tsRep.getTransactionId());
-				
+				LOG.info(String.format("on primary: transaction: %s, procedure: %s, procedure parameters: %s", ts.getTransactionId(), ts.getProcedure(), ts.getProcedureParameters()));
 				Procedure catalog_proc = ts.getProcedure();
 				StoredProcedureInvocation spi = new StoredProcedureInvocation(
 						ts.getClientHandle(), catalog_proc.getId(),
@@ -3160,7 +3160,8 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 					.getTransactionId());
 			LOG.info("Finished!");
 		} else {
-			LOG.info("is sys proc or secondary so ignoring");
+			LOG.info(String.format("on secondary: transaction: %s, procedure: %s, procedure parameters: %s", ts.getTransactionId(), ts.getProcedure(), ts.getProcedureParameters()));
+			LOG.info("is sys proc or secondary so not replicating transaction");
 		}
 
 		if (hstore_conf.site.txn_profiling && ts.profiler != null) {
