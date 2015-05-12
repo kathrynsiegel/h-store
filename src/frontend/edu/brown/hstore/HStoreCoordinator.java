@@ -19,6 +19,7 @@ import org.apache.commons.lang.NotImplementedException;
 import org.apache.log4j.Logger;
 import org.voltdb.CatalogContext;
 import org.voltdb.ParameterSet;
+import org.voltdb.StoredProcedureInvocation;
 import org.voltdb.VoltTable;
 import org.voltdb.catalog.Database;
 import org.voltdb.catalog.Host;
@@ -708,6 +709,9 @@ public class HStoreCoordinator implements Shutdownable {
         @Override
     	public void transactionForwardToReplica(RpcController controller, TransactionForwardToReplicaRequest request,
     	          RpcCallback<TransactionForwardToReplicaResponse> done) {
+        	
+            
+            
         	if (debug.val)
                 LOG.debug(String.format("Received %s from HStoreSite %s",
                           request.getClass().getSimpleName(),
@@ -722,6 +726,21 @@ public class HStoreCoordinator implements Shutdownable {
                 String msg = "Failed to get " + TransactionRedirectResponseCallback.class.getSimpleName();
                 throw new RuntimeException(msg, ex);
             }
+            
+            
+            
+            final FastDeserializer incomingDeserializer = new FastDeserializer();
+        	ParameterSet procParams = new ParameterSet();
+            try {
+                StoredProcedureInvocation.seekToParameterSet(serializedRequest);
+                incomingDeserializer.setBuffer(serializedRequest);
+                procParams.readExternal(incomingDeserializer);
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            } 
+            LOG.info(String.format("here are the actual procparams: ", procParams));
+            
+            
             try {
                 hstore_site.invocationProcess(serializedRequest, callback);
             } catch (Throwable ex) {
