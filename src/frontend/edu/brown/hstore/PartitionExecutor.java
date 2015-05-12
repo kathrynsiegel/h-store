@@ -2922,12 +2922,6 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 	 * @param ts
 	 */
 	private void executeTransaction(LocalTransaction ts) {
-		LOG.info(String.format("new transaction %s! with callback %s",
-				ts.getTransactionId(), ts.getClientCallback().toString()));
-		if (ts.getClientCallback() instanceof TransactionForwardToReplicaResponseCallback) {
-			TransactionForwardToReplicaResponseCallback responseCallback = (TransactionForwardToReplicaResponseCallback)ts.getClientCallback();
-			LOG.info(String.format("%s", responseCallback.getOrigTxnId()));
-		}
 		assert (ts.isInitialized()) : String
 				.format("Trying to execute uninitialized transaction %s at partition %d",
 						ts, this.partitionId);
@@ -3081,12 +3075,9 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 		if (!ts.isSysProc() && this.hstore_site.isPrimaryPartition(basePartition)) {
 			final List<Integer> partitionReplicas = this.hstore_site
 					.getPartitionReplicas(basePartition);
-			LOG.info(String.format("replicating from partition %s",
-					basePartition));
-			// semaphore and callback
 			int numReplicas = partitionReplicas.size();
-
-			LOG.info("about to call semaphore method");
+			
+			// create semaphore and callback for synchronous and semi-synchronous replication
 			Semaphore permit = this.hstore_coordinator
 					.addTransactionReplicatePermit(ts.getTransactionId(),
 							numReplicas);
@@ -3095,34 +3086,7 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 
 			// send to each replica via HStoreCoordinator
 			for (int i = 0; i < partitionReplicas.size(); i++) {
-//				LocalTransaction tsRep = new LocalTransaction(hstore_site);
-//				Integer[] touchedPartitions = {partitionReplicas.get(i)};
-//				tsRep.init(ts.getTransactionId(), System.currentTimeMillis(),
-//						ts.getClientHandle(), partitionReplicas.get(i),
-//						new PartitionSet(touchedPartitions),
-//						ts.isPredictReadOnly(), ts.isPredictAbortable(),
-//						ts.getProcedure(), ts.getProcedureParameters(),
-//						ts.getClientCallback()); // TODO maybe fix?
-//				Procedure catalog_proc = tsRep.getProcedure();
-//				StoredProcedureInvocation spi = new StoredProcedureInvocation(
-//						tsRep.getClientHandle(), catalog_proc.getId(),
-//						catalog_proc.getName(), tsRep.getProcedureParameters()
-//								.toArray());
-//				spi.setBasePartition(tsRep.getBasePartition());
-//				spi.setRestartCounter(tsRep.getRestartCounter() + 1);
-//				try {
-//					this.fs.writeObject(spi);
-//				} catch (IOException ex) {
-//					String msg = "Failed to serialize StoredProcedureInvocation to forward txn to replica";
-//					throw new ServerFaultException(msg, ex,
-//							tsRep.getTransactionId());
-//				}
-//				byte[] serializedSpi = this.fs.getBytes();
-//				LOG.info(String.format("sending transaction %s to replica", tsRep.getTransactionId()));
-//				this.hstore_coordinator.transactionReplicate(serializedSpi,
-//						replica_callback, tsRep.getBasePartition(),
-//						tsRep.getTransactionId());
-				LOG.info(String.format("on primary: transaction: %s, procedure: %s, procedure parameters: %s", ts.getTransactionId(), ts.getProcedure(), ts.getProcedureParameters().toArray()));
+				// serialize transaction so we can pass to the replica
 				Procedure catalog_proc = ts.getProcedure();
 				StoredProcedureInvocation spi = new StoredProcedureInvocation(
 						ts.getClientHandle(), catalog_proc.getId(),
@@ -3137,47 +3101,21 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 							ts.getTransactionId());
 				}
 				byte[] serializedSpi = fsRep.getBytes();
-				LOG.info(String.format("sending transaction %s to replica", ts.getTransactionId()));
-				
-				ByteString bs1 = ByteString.copyFrom(serializedSpi);
-		    	ByteBuffer serializedRequest1 = bs1.asReadOnlyByteBuffer();
-		        final FastDeserializer incomingDeserializer = new FastDeserializer();
-		    	ParameterSet procParams = new ParameterSet();
-		        try {
-		            StoredProcedureInvocation.seekToParameterSet(serializedRequest1);
-		            incomingDeserializer.setBuffer(serializedRequest1);
-		            procParams.readExternal(incomingDeserializer);
-		        } catch (Exception ex) {
-		            throw new RuntimeException(ex);
-		        } 
-		        
-				LOG.info(String.format("deserialized procparams: %s",procParams));
-				
-				
-				
+				// send via hstorecoordinator to the replica
 				this.hstore_coordinator.transactionReplicate(serializedSpi,
 						replica_callback, partitionReplicas.get(i),
 						ts.getTransactionId());
 			}
 
-			LOG.info(String.format(
-					"Waiting for finished callback %s, number of permits: %s",
-					replica_callback.toString(), permit.availablePermits()));
-
 			// block until semaphore is released
 			try {
 				permit.acquire(numReplicas);
 			} catch (InterruptedException e) {
-				LOG.info("uh oh error!!!");
-				// silently ignore again
+				// silently ignore
 			}
 			permit.release(numReplicas);
 			this.hstore_coordinator.removeTransactionReplicatePermit(ts
 					.getTransactionId());
-			LOG.info("Finished!");
-		} else {
-			LOG.info(String.format("on secondary: transaction: %s, procedure: %s, procedure parameters: %s", ts.getTransactionId(), ts.getProcedure(), ts.getProcedureParameters()));
-			LOG.info("is sys proc or secondary so not replicating transaction");
 		}
 
 		if (hstore_conf.site.txn_profiling && ts.profiler != null) {
@@ -6528,13 +6466,9 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 	 */
 	protected void processClientResponse(LocalTransaction ts,
 			ClientResponseImpl cresponse) {
-		LOG.info(String.format("processing client response %s", ts.debug()));
 		// if a replicated transaction, then send acknowledgement
 		// that replication has succeeded
-		LOG.info(String.format("Checking if partition %s is a replica",
-				this.partitionId));
 		if (!ts.isSysProc() && !this.hstore_site.isPrimaryPartition(this.partitionId)) {
-			LOG.info("acknowledging the finished replication");
 			Map<Integer, List<Integer>> partitionReplicas = this.hstore_site
 					.getPartitionReplicasMap();
 			Iterator<Entry<Integer, List<Integer>>> it = partitionReplicas
@@ -6542,13 +6476,8 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 			while (it.hasNext()) {
 				Entry<Integer, List<Integer>> entry = it.next();
 				if (entry.getValue().contains(this.partitionId) && ts.getClientCallback() instanceof TransactionForwardToReplicaResponseCallback) {
-					LOG.info(String
-							.format("sending finished replication callback for transaction %s",
-									ts.getTransactionId()));
 					this.hstore_coordinator.transactionReplicateFinish(
 							((TransactionForwardToReplicaResponseCallback)ts.getClientCallback()).getOrigTxnId(), entry.getKey());
-				} else {
-					LOG.info("uh oh shouldn't happen");
 				}
 			}
 		}
@@ -8466,45 +8395,15 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 			String databaseName, String tableName, VoltTable data, int allowELT) {
 		final List<Integer> partitionReplicas = this.hstore_site
 				.getPartitionReplicas(this.getPartitionId());
-		LOG.info(String.format("replica load table method on primary %s %s", this.getPartitionId(), partitionReplicas.size()));
 		// send to each replica via HStoreCoordinator
 		for (int i = 0; i < partitionReplicas.size(); i++) {
-//			LocalTransaction tsRep = new LocalTransaction(hstore_site);
 			RpcCallback<ReplicaLoadTableResponse> replica_callback = new RpcCallback<ReplicaLoadTableResponse>() {
 				@Override
 				public void run(ReplicaLoadTableResponse parameter) {
-					// TODO Auto-generated method stub
-					LOG.info("replicated log table");
+					// do nothing -- we don't block on this forwarded transaction because it's prioritized
+					// in work queue
 				}
 			};
-//			LOG.info/("initializing new load table transaction");
-//			tsRep.init(ts.getTransactionId(), System.currentTimeMillis(),
-//					"", partitionReplicas.get(i),
-//					ts.getPredictTouchedPartitions(), ts.isPredictReadOnly(),
-//					ts.isPredictAbortable(), ts.getProcedure(),
-//					ts.getProcedureParameters(), null);
-//			LOG.info("here");
-//			Procedure catalog_proc = tsRep.getProcedure();
-//			LOG.info("here");
-//			StoredProcedureInvocation spi = new StoredProcedureInvocation(
-//					tsRep.getClientHandle(), catalog_proc.getId(),
-//					catalog_proc.getName(), tsRep.getProcedureParameters()
-//							.toArray());
-//			LOG.info("here");
-//			spi.setBasePartition(tsRep.getBasePartition());
-//			LOG.info("here");
-//			spi.setRestartCounter(tsRep.getRestartCounter() + 1);
-//			LOG.info("here");
-//			try {
-//				this.fs.writeObject(spi);
-//			} catch (IOException ex) {
-//				LOG.info("oops! exception");
-//				String msg = "Failed to serialize StoredProcedureInvoca/tion to forward txn to replica";
-//				throw new ServerFaultException(msg, ex,
-//						tsRep.getTransactionId());
-//			}
-//			byte[] serializedSpi = this.fs.getBytes();
-			LOG.info("about to call replicaloadtable on primary");
 			this.hstore_coordinator.replicaLoadTable(replica_callback, partitionReplicas.get(i),
 					ts.getTransactionId(), clusterName, databaseName, tableName, data, allowELT);
 		}

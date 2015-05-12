@@ -709,14 +709,10 @@ public class HStoreCoordinator implements Shutdownable {
         @Override
     	public void transactionForwardToReplica(RpcController controller, TransactionForwardToReplicaRequest request,
     	          RpcCallback<TransactionForwardToReplicaResponse> done) {
-        	
-            
-            
         	if (debug.val)
                 LOG.debug(String.format("Received %s from HStoreSite %s",
                           request.getClass().getSimpleName(),
                           HStoreThreadManager.formatSiteName(request.getSenderSite())));
-            LOG.info(String.format("transaction %s received at replica", request.getOrigTxnId()));
             ByteBuffer serializedRequest = request.getWork().asReadOnlyByteBuffer();
             TransactionForwardToReplicaResponseCallback callback = null;
             try {
@@ -726,42 +722,32 @@ public class HStoreCoordinator implements Shutdownable {
                 String msg = "Failed to get " + TransactionRedirectResponseCallback.class.getSimpleName();
                 throw new RuntimeException(msg, ex);
             }
-            
             try {
                 hstore_site.invocationProcess(serializedRequest, callback);
             } catch (Throwable ex) {
                 shutdownCluster(ex);
             }
-            LOG.info("sent forwarded transaction");
     	}
         
         @Override
 		public void transactionReplicateFinish(RpcController controller, TransactionReplicateFinishRequest request, 
 				RpcCallback<TransactionReplicateFinishResponse> done) {
-			LOG.info(String.format("finished transaction replication and reached callback on primary for transaction %s",request.getTxnId()));
-			LOG.info(String.format("permits for site %s: %s", HStoreCoordinator.this.getLocalSiteId(), HStoreCoordinator.this.transactionReplicatePermits.toString()));
 			Semaphore permit = HStoreCoordinator.this.transactionReplicatePermits.get(request.getTxnId());
 			if (permit != null) {
 				permit.release();
-				LOG.info("released semaphore");
-			} else {
-				LOG.info(String.format("uh oh no semaphore exists for this transaction %s", request.getTxnId()));
 			}
 		}
         
         @Override
 		public void replicaLoadTable(RpcController controller, ReplicaLoadTableRequest request,
 				RpcCallback<ReplicaLoadTableResponse> done) {
-        	LOG.info(String.format("load table txn on replica %s", request.getPartition()));
 			VoltTable data = null;
 			try {
 				ByteString bytes = request.getData();
 				data = FastDeserializer.deserialize(bytes.toByteArray(), VoltTable.class);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				LOG.error("Error in deserializing volt table");
+				// silently ignore
 			}
-			
 			ReplicaLoadTableMessage loadTableMessage = new ReplicaLoadTableMessage(
 					request.getOrigTxnId(),
 					request.getClusterName(),
@@ -770,7 +756,6 @@ public class HStoreCoordinator implements Shutdownable {
 					data, 
 					request.getAllowELT());
 			hstore_site.getPartitionExecutor(request.getPartition()).queueUtilityWork(loadTableMessage);
-			
 		}
         
         @Override
@@ -1527,9 +1512,7 @@ public class HStoreCoordinator implements Shutdownable {
     // ----------------------------------------------------------------------------
     public void transactionReplicate(byte[] serializedRequest, 
     		RpcCallback<TransactionForwardToReplicaResponse> replica_callback, 
-    		int partition, long transactionID) {
-    	
-    	LOG.info("reached transactionreplicate method");
+    		int partition, long transactionID) {    	
     	int site = catalogContext.getSiteIdForPartitionId(partition);
     	if (site == this.local_site_id) {
 			throw new NotImplementedException();
@@ -1541,7 +1524,6 @@ public class HStoreCoordinator implements Shutdownable {
 					.setSenderSite(this.local_site_id)
 					.setOrigTxnId(transactionID)
 					.setWork(bs).build();
-			LOG.info(String.format("sending out transactionforwardtoreplica request for transaction"));
 			this.channels[site].transactionForwardToReplica(new ProtoRpcController(), request, replica_callback);
 		} catch (RuntimeException ex) {
 			// Silently ignore these errors...
