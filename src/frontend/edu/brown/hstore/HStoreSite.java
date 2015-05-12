@@ -1799,6 +1799,7 @@ public class HStoreSite implements VoltProcedureListener.Handler, Shutdownable, 
         if (this.isLocalPartition(base_partition) == false) {
             // If the base_partition isn't local, then we need to ship it off to
             // the right HStoreSite
+        	LOG.info(String.format("WARN: redirecting transaction"));
             this.transactionRedirect(catalog_proc, buffer, base_partition, clientCallback);
             return;
         }

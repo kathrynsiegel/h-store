@@ -3139,6 +3139,18 @@ public class PartitionExecutor implements Runnable, Configurable, Shutdownable {
 				}
 				byte[] serializedSpi = this.fs.getBytes();
 				LOG.info(String.format("sending transaction %s to replica", ts.getTransactionId()));
+				
+				final FastDeserializer incomingDeserializer = new FastDeserializer();
+				ParameterSet procParams = new ParameterSet();
+		        try {
+		            StoredProcedureInvocation.seekToParameterSet(ByteString.copyFrom(serializedSpi).asReadOnlyByteBuffer());
+		            incomingDeserializer.setBuffer(ByteString.copyFrom(serializedSpi).asReadOnlyByteBuffer());
+		            procParams.readExternal(incomingDeserializer);
+		        } catch (Exception ex) {
+		            throw new RuntimeException(ex);
+		        } 
+				LOG.info(String.format("deserialized procparams: %s",procParams));
+				
 				this.hstore_coordinator.transactionReplicate(serializedSpi,
 						replica_callback, partitionReplicas.get(i),
 						ts.getTransactionId());
